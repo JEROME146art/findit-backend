@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - FindIt</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: #f5f6fa; }
+        .stat-card { transition: transform 0.3s; border: none; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .stat-card:hover { transform: translateY(-5px); }
+        .action-card { border: 2px dashed #dee2e6; transition: all 0.3s; cursor: pointer; }
+        .action-card:hover { border-color: #6c5ce7; background: #f8f9ff; }
+        .recent-item { transition: all 0.2s; cursor: pointer; }
+        .recent-item:hover { background: #f8f9ff; }
+        .spinner-tiny { width: 1.5rem; height: 1.5rem; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/dashboard">
+            <i class="bi bi-search"></i> FindIt
+        </a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link active" href="/dashboard">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/report">Report Item</a></li>
+                <li class="nav-item"><a class="nav-link" href="/matches">My Matches</a></li>
+                <li class="nav-item"><a class="nav-link" href="/browse">Browse Items</a></li>
+            </ul>
+            <div class="d-flex align-items-center text-white">
+                <span class="me-3">
+                    <i class="bi bi-person-circle"></i> <span id="userName">User</span>
+                </span>
+                <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                    <i class="bi bi-box-arrow-right"></i> Logout
+                </button>
+            </div>
+        </div>
+    </div>
+</nav>
+
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="mb-3">Welcome back, <span id="welcomeName">User</span>! 👋</h1>
+            <p class="text-muted">Here's what's happening with your items.</p>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="row g-3 mt-2">
+        <div class="col-md-3">
+            <div class="stat-card card p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Lost Items</p>
+                        <h2 class="fw-bold mb-0" id="lostCount">-</h2>
+                    </div>
+                    <div class="display-4 text-danger">
+                        <i class="bi bi-exclamation-triangle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card card p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Found Items</p>
+                        <h2 class="fw-bold mb-0" id="foundCount">-</h2>
+                    </div>
+                    <div class="display-4 text-success">
+                        <i class="bi bi-check-circle"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card card p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Resolved</p>
+                        <h2 class="fw-bold mb-0" id="resolvedCount">-</h2>
+                    </div>
+                    <div class="display-4 text-info">
+                        <i class="bi bi-award"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="stat-card card p-4">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <p class="text-muted mb-1 small">Active</p>
+                        <h2 class="fw-bold mb-0" id="activeCount">-</h2>
+                    </div>
+                    <div class="display-4 text-warning">
+                        <i class="bi bi-lightning"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="row g-3 mt-4">
+        <div class="col-12">
+            <h3 class="mb-3">Quick Actions</h3>
+        </div>
+        <div class="col-md-4">
+            <a href="/report" class="text-decoration-none">
+                <div class="action-card card p-4 text-center">
+                    <div class="display-3 text-primary"><i class="bi bi-plus-circle"></i></div>
+                    <h5 class="mt-3">Report an Item</h5>
+                    <p class="text-muted small">Lost or found something?</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/matches" class="text-decoration-none">
+                <div class="action-card card p-4 text-center">
+                    <div class="display-3 text-warning"><i class="bi bi-stars"></i></div>
+                    <h5 class="mt-3">View Matches</h5>
+                    <p class="text-muted small">See potential matches</p>
+                </div>
+            </a>
+        </div>
+        <div class="col-md-4">
+            <a href="/browse" class="text-decoration-none">
+                <div class="action-card card p-4 text-center">
+                    <div class="display-3 text-info"><i class="bi bi-search"></i></div>
+                    <h5 class="mt-3">Browse Items</h5>
+                    <p class="text-muted small">See all reported items</p>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row mt-5">
+        <div class="col-md-6">
+            <h4><i class="bi bi-exclamation-triangle text-danger"></i> Recent Lost Items</h4>
+            <div class="card">
+                <div class="card-body" id="recentLostContainer">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-tiny text-primary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <h4><i class="bi bi-check-circle text-success"></i> Recent Found Items</h4>
+            <div class="card">
+                <div class="card-body" id="recentFoundContainer">
+                    <div class="text-center py-3">
+                        <div class="spinner-border spinner-tiny text-primary"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="text-center text-muted mt-5 mb-3">
+        <small>FindIt — Campus Lost &amp; Found Matcher © 2024</small>
+    </div>
+</div>
+
+<script>
+    const token = localStorage.getItem('token');
+    if (!token) window.location.href = '/login';
+
+    const fullName = localStorage.getItem('fullName') || 'User';
+    document.getElementById('userName').textContent = fullName;
+    document.getElementById('welcomeName').textContent = fullName;
+
+    function timeAgo(dateStr) {
+        if (!dateStr) return 'Unknown';
+        const date = new Date(dateStr);
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 60) return 'just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return minutes + ' min ago';
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return hours + 'h ago';
+        return Math.floor(hours / 24) + 'd ago';
+    }
+
+    async function loadDashboard() {
+        try {
+            const [lostRes, foundRes] = await Promise.all([
+                fetch('/api/items/lost', { headers: {'Authorization': 'Bearer ' + token} }),
+                fetch('/api/items/found', { headers: {'Authorization': 'Bearer ' + token} })
+            ]);
+            const lost = await lostRes.json();
+            const found = await foundRes.json();
+
+            // Stats
+            document.getElementById('lostCount').textContent = lost.length;
+            document.getElementById('foundCount').textContent = found.length;
+
+            const allItems = [...lost, ...found];
+            const resolved = allItems.filter(i => i.resolved).length;
+            const active = allItems.length - resolved;
+            document.getElementById('resolvedCount').textContent = resolved;
+            document.getElementById('activeCount').textContent = active;
+
+            // Recent items (sort by createdAt, take top 3)
+            const sortByDate = (a, b) => new Date(b.createdAt) - new Date(a.createdAt);
+            const recentLost = lost.sort(sortByDate).slice(0, 3);
+            const recentFound = found.sort(sortByDate).slice(0, 3);
+
+            renderRecent('recentLostContainer', recentLost, 'lost');
+            renderRecent('recentFoundContainer', recentFound, 'found');
+        } catch (err) {
+            console.error('Failed to load dashboard', err);
+        }
+    }
+
+    function renderRecent(containerId, items, type) {
+        const container = document.getElementById(containerId);
+        if (items.length === 0) {
+            container.innerHTML = `<p class="text-muted text-center py-3 mb-0">No ${type} items yet</p>`;
+            return;
+        }
+        let html = '';
+        for (const item of items) {
+            const loc = item.location?.building || 'Unknown';
+            html += `
+                <div class="recent-item p-2 border-bottom" onclick="window.location.href='/browse'">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <strong>${item.title}</strong>
+                            ${item.resolved ? '<span class="badge bg-secondary ms-1">RESOLVED</span>' : ''}
+                            <br>
+                            <small class="text-muted"><i class="bi bi-geo-alt"></i> ${loc}</small>
+                        </div>
+                        <small class="text-muted">${timeAgo(item.createdAt)}</small>
+                    </div>
+                </div>`;
+        }
+        container.innerHTML = html;
+    }
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = '/';
+    }
+
+    loadDashboard();
+</script>
+
+</body>
+</html>
