@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Townhall Q&A Forum — UniVote AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { slate: { 850: '#1e293b', 950: '#020617' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="shared-header"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Q&A Feed -->
+            <div class="lg:col-span-2 space-y-6">
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-xl font-bold text-white flex items-center space-x-2">
+                            <span>Campus Townhall Forum</span>
+                            <span class="bg-indigo-500/20 text-indigo-300 text-xs px-2.5 py-0.5 rounded-full border border-indigo-500/30 font-bold">Verified Student Q&A</span>
+                        </h1>
+                        <p class="text-xs text-slate-400 mt-1">Direct questions asked by students. Top upvoted questions require official responses before election day.</p>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button onclick="sortQA('upvotes')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm">Top Upvoted</button>
+                        <button onclick="sortQA('recent')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium">Most Recent</button>
+                    </div>
+                </div>
+
+                <!-- Questions List -->
+                <div id="qa-container" class="space-y-4"></div>
+            </div>
+
+            <!-- Ask Question Sidebar -->
+            <div class="space-y-6">
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/60 bg-gradient-to-br from-slate-900 to-indigo-950/30 sticky top-28">
+                    <h2 class="text-lg font-bold text-white mb-2 flex items-center space-x-2">
+                        <span>💡 Submit a Townhall Question</span>
+                    </h2>
+                    <p class="text-xs text-slate-300 mb-4">Your verified student ID checks enrollment, but your question can be posted anonymously if you prefer.</p>
+                    
+                    <form onsubmit="submitQuestion(event)" class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">Direct To Which Candidate?</label>
+                            <select id="qa-target" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="All SGA Candidates">All SGA Executive Candidates</option>
+                                <option value="Alex Rivera & Maya Lin">Alex Rivera & Maya Lin (SGA)</option>
+                                <option value="Jordan Vance & Chloe Bennett">Jordan Vance & Chloe Bennett (SGA)</option>
+                                <option value="Engineering Candidates">School of Engineering Candidates</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">Topic / Issue Category</label>
+                            <select id="qa-category" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                <option value="Dormitory & Dining">🍔 Dormitory & Dining Quality</option>
+                                <option value="Academic & Finals Schedule">📚 Academic & Finals Policy</option>
+                                <option value="Campus Safety & Transit">🚌 Campus Safety & Night Shuttle</option>
+                                <option value="Club Budget & Tuition Transparency">💰 Tuition & Club Budget Allocation</option>
+                                <option value="Sustainability & Green Campus">🌱 Sustainability Initiatives</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">Your Question</label>
+                            <textarea id="qa-text" required rows="4" placeholder="E.g., What concrete action will you take during your first 30 days to improve mental health counseling wait times on campus?" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                        </div>
+
+                        <div class="flex items-center space-x-2">
+                            <input type="checkbox" id="qa-anon" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                            <label for="qa-anon" class="text-xs text-slate-300">Post question as <strong class="text-white">Anonymous Verified Student</strong></label>
+                        </div>
+
+                        <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition text-xs flex items-center justify-center space-x-2">
+                            <span>Post Question to Townhall</span>
+                            <span>🚀</span>
+                        </button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="shared-footer"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        let townhall = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader('townhall');
+            renderFooter();
+            townhall = getTownhall();
+            renderTownhall();
+        });
+
+        function renderTownhall() {
+            const container = document.getElementById('qa-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            townhall.forEach(q => {
+                const card = `
+                    <div class="glass-card rounded-2xl p-6 border border-slate-700/80 space-y-4">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <div class="flex items-center space-x-2 text-xs text-slate-400 mb-1.5">
+                                    <span class="font-bold text-indigo-400">Target: ${q.target}</span>
+                                    <span>•</span>
+                                    <span class="bg-slate-800 px-2 py-0.5 rounded text-[11px]">${q.category}</span>
+                                    <span>•</span>
+                                    <span>Asked by ${q.author} (${q.timestamp})</span>
+                                </div>
+                                <h3 class="text-base font-bold text-white leading-relaxed">${q.question}</h3>
+                            </div>
+                            <button onclick="toggleUpvote('${q.id}')" class="px-3 py-2 rounded-xl border flex flex-col items-center justify-center transition-all ${q.hasUpvoted ? 'bg-indigo-600 border-indigo-500 text-white shadow-md' : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'}">
+                                <span class="text-xs font-extrabold">▲</span>
+                                <span class="text-xs font-bold">${q.upvotes}</span>
+                            </button>
+                        </div>
+
+                        ${q.answer ? `
+                            <div class="bg-indigo-950/30 border border-indigo-500/30 rounded-xl p-4 text-xs sm:text-sm space-y-1 mt-3">
+                                <div class="flex items-center space-x-1.5 text-indigo-300 font-bold text-xs uppercase tracking-wider">
+                                    <span>✅ Verified Candidate Response</span>
+                                </div>
+                                <p class="text-slate-200 leading-relaxed font-medium">${q.answer}</p>
+                            </div>
+                        ` : `
+                            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-xs text-amber-300/80 flex items-center justify-between">
+                                <span>⏳ Candidate response pending...</span>
+                                <button onclick="answerPrompt('${q.id}')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs">Answer Now</button>
+                            </div>
+                        `}
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', card);
+            });
+        }
+
+        function toggleUpvote(qid) {
+            const q = townhall.find(item => item.id === qid);
+            if (!q) return;
+            if (q.hasUpvoted) {
+                q.hasUpvoted = false;
+                q.upvotes -= 1;
+            } else {
+                q.hasUpvoted = true;
+                q.upvotes += 1;
+            }
+            saveTownhall(townhall);
+            renderTownhall();
+        }
+
+        function sortQA(type) {
+            if (type === 'upvotes') {
+                townhall.sort((a, b) => b.upvotes - a.upvotes);
+            } else {
+                townhall.reverse();
+            }
+            renderTownhall();
+        }
+
+        function submitQuestion(e) {
+            e.preventDefault();
+            const target = document.getElementById('qa-target').value;
+            const category = document.getElementById('qa-category').value;
+            const text = document.getElementById('qa-text').value;
+            const isAnon = document.getElementById('qa-anon').checked;
+
+            if (!text.trim()) return;
+
+            townhall.unshift({
+                id: 'qa-' + Date.now(),
+                target: target,
+                category: category,
+                question: text,
+                author: isAnon ? 'Anonymous Verified Student' : 'Jordan Smith (Verified Senior)',
+                timestamp: 'Just now',
+                upvotes: 1,
+                hasUpvoted: true,
+                answer: null
+            });
+
+            saveTownhall(townhall);
+            document.getElementById('qa-text').value = '';
+            renderTownhall();
+            alert('Your question has been posted to the Campus Townhall Forum!');
+        }
+
+        function answerPrompt(qid) {
+            const q = townhall.find(item => item.id === qid);
+            if (!q) return;
+            const ans = prompt("Enter official response for: " + q.question);
+            if (ans && ans.trim()) {
+                q.answer = ans.trim();
+                saveTownhall(townhall);
+                renderTownhall();
+            }
+        }
+    </script>
+</body>
+</html>

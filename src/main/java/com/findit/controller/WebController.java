@@ -44,4 +44,9 @@ public class WebController {
     public String browse() {
         return "browse";
     }
+
+    @GetMapping({"/voting", "/univote"})
+    public String voting() {
+        return "voting";
+    }
 }

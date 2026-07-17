@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Side-by-Side Platform Matrix — UniVote AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { slate: { 850: '#1e293b', 950: '#020617' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="shared-header"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                <div>
+                    <h1 class="text-2xl font-extrabold tracking-tight text-white flex items-center space-x-2">
+                        <span>Side-by-Side Platform Comparison Matrix</span>
+                        <span class="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-bold">Policy Deep Dive</span>
+                    </h1>
+                    <p class="text-slate-300 text-sm mt-1">Select candidates from campus elections to compare their stances across critical university matters.</p>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <label class="text-xs text-slate-400 font-medium">Select Election:</label>
+                    <select id="compare-select" onchange="renderMatrix()" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        <option value="SGA-2026">2026 Student Government Association (SGA) Executive</option>
+                        <option value="ENG-2026">School of Engineering Senate Representative</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Comparison Table -->
+            <div class="overflow-x-auto rounded-2xl border border-slate-700/80 bg-slate-900/60">
+                <table class="w-full text-left border-collapse" id="matrix-table"></table>
+            </div>
+        </div>
+    </main>
+
+    <div id="shared-footer"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        let elections = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader('compare');
+            renderFooter();
+            elections = getElections();
+            renderMatrix();
+        });
+
+        function renderMatrix() {
+            const table = document.getElementById('matrix-table');
+            const select = document.getElementById('compare-select');
+            if (!table || !select) return;
+
+            const elecId = select.value;
+            const election = elections.find(e => e.id === elecId);
+            if (!election) return;
+
+            const cands = election.candidates.slice(0, 4);
+
+            table.innerHTML = `
+                <thead>
+                    <tr class="border-b border-slate-800 bg-slate-800/90 text-slate-300 uppercase font-bold text-xs">
+                        <th class="py-4 px-6 w-1/4">Policy / Campus Issue</th>
+                        ${cands.map(c => `<th class="py-4 px-6 text-white font-extrabold text-sm">${c.name}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/80 text-xs sm:text-sm">
+                    <tr>
+                        <td class="py-4 px-6 font-bold text-indigo-300 bg-slate-900/60">Campaign Slogan</td>
+                        ${cands.map(c => `<td class="py-4 px-6 font-semibold text-white leading-relaxed">${c.slogan || '—'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="py-4 px-6 font-bold text-emerald-300 bg-slate-900/60">📚 Academic & Library Access</td>
+                        ${cands.map(c => `<td class="py-4 px-6 text-slate-300 leading-relaxed">${c.academic || 'Focusing on standard syllabus transparency and tutoring access.'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="py-4 px-6 font-bold text-teal-300 bg-slate-900/60">🌱 Campus Sustainability & Green Budget</td>
+                        ${cands.map(c => `<td class="py-4 px-6 text-slate-300 leading-relaxed">${c.sustainability || 'Supporting campus solar initiatives and waste reduction.'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="py-4 px-6 font-bold text-amber-300 bg-slate-900/60">🍔 Housing, Dining & Club Allocation</td>
+                        ${cands.map(c => `<td class="py-4 px-6 text-slate-300 leading-relaxed">${c.housing || 'Advocating for student club grants and better dining hours.'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="py-4 px-6 font-bold text-purple-300 bg-slate-900/60">Candidate Background & Bio</td>
+                        ${cands.map(c => `<td class="py-4 px-6 text-slate-400 text-xs leading-relaxed">${c.bio || 'Active university student leaders committed to campus progress.'}</td>`).join('')}
+                    </tr>
+                </tbody>
+            `;
+        }
+    </script>
+</body>
+</html>

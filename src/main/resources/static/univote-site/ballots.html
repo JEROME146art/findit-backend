@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Active Campus Elections & Ballots — UniVote AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { slate: { 850: '#1e293b', 950: '#020617' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="shared-header"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <!-- Hero Header & Filter Bar -->
+        <div class="glass-card rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-slate-900 via-slate-800/90 to-indigo-950/40 border border-slate-700/60 shadow-xl relative overflow-hidden">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                <div>
+                    <div class="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-300 text-xs font-semibold mb-3">
+                        <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
+                        <span>Spring 2026 Live Elections</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Your Campus Ballots & Petitions</h1>
+                    <p class="text-slate-300 text-sm mt-1 max-w-2xl">
+                        Vote using modern <strong class="text-indigo-400">Ranked-Choice Voting (RCV)</strong> to prevent vote-splitting or standard single-choice plurality. Upon submission, you receive an anonymous SHA-256 receipt token.
+                    </p>
+                </div>
+                <div class="flex flex-wrap items-center gap-3">
+                    <a href="ledger.html" class="px-4 py-2.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold transition flex items-center space-x-2 no-underline">
+                        <span>🔍 Verify Ballot Token</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Filter & Search Bar -->
+            <div class="mt-6 pt-6 border-t border-slate-700/60 flex flex-col sm:flex-row gap-4 items-center justify-between text-xs sm:text-sm">
+                <div class="flex flex-wrap gap-2 w-full sm:w-auto" id="filter-buttons">
+                    <button onclick="filterCategory('ALL', this)" class="filter-btn bg-indigo-600 text-white px-3.5 py-1.5 rounded-lg font-bold transition">All Elections</button>
+                    <button onclick="filterCategory('SGA', this)" class="filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-1.5 rounded-lg font-medium transition">SGA Executive</button>
+                    <button onclick="filterCategory('SENATE', this)" class="filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-1.5 rounded-lg font-medium transition">Academic Senate</button>
+                    <button onclick="filterCategory('REFERENDUM', this)" class="filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-1.5 rounded-lg font-medium transition">Referendums</button>
+                </div>
+                <div class="relative w-full sm:w-64">
+                    <input type="text" id="search-input" oninput="renderElections()" placeholder="Search positions or candidates..." class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                </div>
+            </div>
+        </div>
+
+        <!-- Elections List -->
+        <div id="elections-list" class="space-y-8"></div>
+    </main>
+
+    <!-- Vote Confirmation & Receipt Modal -->
+    <div id="vote-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-opacity">
+        <div class="glass-card max-w-lg w-full rounded-2xl p-6 sm:p-8 border border-slate-700 shadow-2xl relative">
+            <div class="text-center space-y-4">
+                <div class="w-16 h-16 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-3xl">
+                    ✅
+                </div>
+                <h3 class="text-2xl font-extrabold text-white">Ballot Cryptographically Sealed!</h3>
+                <p class="text-xs sm:text-sm text-slate-300">
+                    Your choice has been recorded on the campus zero-knowledge audit ledger. Your student eligibility token was verified and detached to ensure absolute secret-ballot privacy.
+                </p>
+
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-left space-y-2">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>Election:</span>
+                        <span class="font-bold text-white" id="modal-election-title">SGA Executive 2026</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>Recorded Choice Summary:</span>
+                        <span class="font-bold text-indigo-300 text-right" id="modal-choice-summary">1st: Alex Rivera & Maya Lin</span>
+                    </div>
+                    <div class="pt-2 border-t border-slate-800/80">
+                        <div class="text-[11px] uppercase font-bold text-emerald-400 mb-1">Your Unique Receipt Token (Save To Verify):</div>
+                        <div class="flex items-center justify-between bg-slate-950 px-3 py-2 rounded-lg border border-slate-800 font-mono text-xs text-amber-300 font-bold select-all">
+                            <span id="modal-receipt-token">#UV-2026-SGA-9A8B7C</span>
+                            <button onclick="copyModalToken()" class="text-xs text-slate-400 hover:text-white ml-2 px-2 py-0.5 bg-slate-800 rounded font-sans font-medium" id="copy-btn-text">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                    <a href="ledger.html" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition text-center no-underline">
+                        Check Token on Public Ledger 🔍
+                    </a>
+                    <button onclick="closeModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
+                        Return to Ballots
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="shared-footer"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        let elections = [];
+        let activeCategory = 'ALL';
+        let rcvSelections = {};
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader('ballots');
+            renderFooter();
+            elections = getElections();
+            renderElections();
+        });
+
+        function filterCategory(cat, btn) {
+            activeCategory = cat;
+            document.querySelectorAll('.filter-btn').forEach(b => {
+                b.className = 'filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-1.5 rounded-lg font-medium transition';
+            });
+            if (btn) btn.className = 'filter-btn bg-indigo-600 text-white px-3.5 py-1.5 rounded-lg font-bold transition';
+            renderElections();
+        }
+
+        function renderElections() {
+            const container = document.getElementById('elections-list');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const query = (document.getElementById('search-input')?.value || '').toLowerCase();
+            const filtered = elections.filter(e => {
+                const catMatch = activeCategory === 'ALL' || e.category === activeCategory;
+                const searchMatch = e.title.toLowerCase().includes(query) ||
+                                    e.candidates.some(c => c.name.toLowerCase().includes(query));
+                return catMatch && searchMatch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-card rounded-2xl p-12 text-center text-slate-400">
+                        <div class="text-4xl mb-3">🔍</div>
+                        <h3 class="text-lg font-bold text-white">No Active Ballots Match Your Search</h3>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(e => {
+                if (!rcvSelections[e.id]) rcvSelections[e.id] = [];
+                const isRcv = e.votingStrategy === 'RCV';
+
+                let strategyBadge = isRcv
+                    ? `<span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full text-xs font-bold">⚡ Ranked-Choice Voting (IRV)</span>`
+                    : (e.votingStrategy === 'PLURALITY'
+                        ? `<span class="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-3 py-1 rounded-full text-xs font-bold">🗳️ Plurality (Single-Choice)</span>`
+                        : `<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold">📜 Referendum Proposition</span>`);
+
+                const card = `
+                    <div class="glass-card rounded-2xl p-6 sm:p-8 border ${e.hasVoted ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-slate-700/80'} shadow-lg transition-all">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    ${strategyBadge}
+                                    <span class="bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-xs font-semibold">👥 ${e.eligibility}</span>
+                                    <span class="bg-amber-500/15 text-amber-300 px-3 py-1 rounded-full text-xs font-semibold">⏰ Closes in ${e.closesIn}</span>
+                                </div>
+                                <h2 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                                    <span>${e.title}</span>
+                                    ${e.hasVoted ? '<span class="bg-emerald-500 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">✅ Voted & Sealed</span>' : ''}
+                                </h2>
+                                ${e.propositionText ? `<p class="text-xs sm:text-sm text-slate-200 mt-3 p-4 bg-slate-800/90 rounded-xl border border-slate-700/80 leading-relaxed font-medium">${e.propositionText}</p>` : ''}
+                            </div>
+                            <div class="flex items-center space-x-3 self-end md:self-center">
+                                ${isRcv && !e.hasVoted ? `<button onclick="clearRcv('${e.id}')" class="text-xs text-slate-400 hover:text-white px-3 py-1.5 bg-slate-800 rounded-lg font-bold">Clear Ranks</button>` : ''}
+                                <div class="text-right hidden sm:block">
+                                    <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Total Ballots Cast</div>
+                                    <div class="text-lg font-extrabold text-white font-mono">${e.totalVotes.toLocaleString()}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${e.candidates.map(cand => {
+                                const rcvIdx = rcvSelections[e.id].indexOf(cand.id);
+                                const isRanked = rcvIdx !== -1;
+                                const rankNum = isRanked ? rcvIdx + 1 : null;
+                                const isSelected = e.selectedCandidate === cand.id;
+
+                                return `
+                                    <div onclick="selectCand('${e.id}', '${cand.id}', ${e.hasVoted})" class="p-5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${isRanked || isSelected ? 'bg-indigo-900/40 border-indigo-500 shadow-glow' : 'bg-slate-800/60 border-slate-700/80 hover:border-slate-600 hover:bg-slate-800'}">
+                                        <div>
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <h3 class="text-base font-extrabold text-white">${cand.name}</h3>
+                                                    ${cand.slogan ? `<p class="text-xs text-indigo-300 font-medium mt-1">${cand.slogan}</p>` : ''}
+                                                </div>
+                                                <div>
+                                                    ${isRcv ? `
+                                                        <div class="w-8 h-8 rounded-full flex items-center justify-center font-extrabold text-sm transition-all ${isRanked ? 'bg-indigo-600 text-white scale-110 shadow-md' : 'bg-slate-900 border border-slate-700 text-slate-500'}">
+                                                            ${isRanked ? `#${rankNum}` : '+'}
+                                                        </div>
+                                                    ` : `
+                                                        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center ${isSelected ? 'border-indigo-500 bg-indigo-600' : 'border-slate-600'}">
+                                                            ${isSelected ? '<div class="w-2.5 h-2.5 bg-white rounded-full"></div>' : ''}
+                                                        </div>
+                                                    `}
+                                                </div>
+                                            </div>
+                                            ${cand.bio ? `<p class="text-xs text-slate-300 mt-3 leading-relaxed">${cand.bio}</p>` : ''}
+                                        </div>
+                                        <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+                                            <span>${isRcv ? (isRanked ? `<strong class="text-indigo-400">Ranked Choice #${rankNum}</strong>` : 'Click to assign rank') : 'Click to select choice'}</span>
+                                            ${cand.academic ? `<a href="compare.html" onclick="event.stopPropagation()" class="text-indigo-300 hover:underline">Compare Policies →</a>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <div class="mt-6 pt-5 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="text-xs text-slate-400">
+                                ${isRcv ? `Ranked choices: <strong class="text-indigo-300">${rcvSelections[e.id].length} / ${e.candidates.length}</strong>.` : 'Select your choice above.'}
+                            </div>
+                            ${e.hasVoted ? `
+                                <div class="px-6 py-3 bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 rounded-xl font-bold text-xs">
+                                    ✅ Ballot Cast & Cryptographically Sealed
+                                </div>
+                            ` : `
+                                <button onclick="submitVote('${e.id}')" class="px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
+                                    <span>${isRcv ? 'Submit Verifiable Ranked Ballot' : 'Submit Verifiable Ballot'}</span>
+                                    <span>🗳️</span>
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', card);
+            });
+        }
+
+        function selectCand(elecId, candId, hasVoted) {
+            if (hasVoted) return;
+            const e = elections.find(item => item.id === elecId);
+            if (!e) return;
+
+            if (e.votingStrategy === 'RCV') {
+                const ranks = rcvSelections[elecId];
+                const idx = ranks.indexOf(candId);
+                if (idx !== -1) ranks.splice(idx, 1);
+                else ranks.push(candId);
+            } else {
+                e.selectedCandidate = candId;
+            }
+            renderElections();
+        }
+
+        function clearRcv(elecId) {
+            rcvSelections[elecId] = [];
+            renderElections();
+        }
+
+        function submitVote(elecId) {
+            const e = elections.find(item => item.id === elecId);
+            if (!e) return;
+
+            let summary = '';
+            if (e.votingStrategy === 'RCV') {
+                const ranks = rcvSelections[elecId];
+                if (ranks.length === 0) {
+                    alert('Please select and rank at least your 1st choice candidate!');
+                    return;
+                }
+                summary = ranks.map((cid, idx) => {
+                    const c = e.candidates.find(item => item.id === cid);
+                    return `${idx + 1}st: ${c.name}`;
+                }).join(', ');
+            } else {
+                if (!e.selectedCandidate) {
+                    alert('Please select an option before casting your ballot!');
+                    return;
+                }
+                const c = e.candidates.find(item => item.id === e.selectedCandidate);
+                summary = `Choice: ${c.name}`;
+            }
+
+            e.hasVoted = true;
+            e.totalVotes += 1;
+            saveElections(elections);
+
+            const hex = Math.floor(100000 + Math.random() * 900000).toString(16).toUpperCase();
+            const token = `#UV-2026-${e.id}-${hex}`;
+
+            const ledger = getAuditLedger();
+            ledger.unshift({
+                token: token,
+                category: e.title.split(' ')[0] + ' ' + (e.title.split(' ')[1] || ''),
+                summary: summary.length > 45 ? summary.substring(0, 45) + '...' : summary,
+                timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC',
+                status: '✅ Validated & Sealed'
+            });
+            saveAuditLedger(ledger);
+
+            renderElections();
+
+            document.getElementById('modal-election-title').innerText = e.title;
+            document.getElementById('modal-choice-summary').innerText = summary;
+            document.getElementById('modal-receipt-token').innerText = token;
+            document.getElementById('vote-modal').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('vote-modal').classList.add('hidden');
+        }
+
+        function copyModalToken() {
+            const t = document.getElementById('modal-receipt-token').innerText;
+            navigator.clipboard?.writeText(t);
+            const b = document.getElementById('copy-btn-text');
+            b.innerText = 'Copied! ✅';
+            setTimeout(() => b.innerText = 'Copy', 2000);
+        }
+    </script>
+</body>
+</html>

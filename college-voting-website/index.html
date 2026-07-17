@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVote AI — College Election Hub (Multi-Page Website)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        slate: { 850: '#1e293b', 950: '#020617' }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+
+    <!-- Shared Header -->
+    <div id="shared-header"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-12">
+        <!-- Hero Section -->
+        <div class="glass-card rounded-3xl p-8 sm:p-12 bg-gradient-to-br from-slate-900 via-slate-800 to-indigo-950/60 border border-slate-700/80 relative overflow-hidden text-center sm:text-left flex flex-col md:flex-row items-center justify-between gap-8">
+            <div class="max-w-2xl space-y-4">
+                <div class="inline-flex items-center space-x-2 bg-indigo-500/20 border border-indigo-500/30 px-3.5 py-1 rounded-full text-indigo-300 text-xs font-bold uppercase tracking-wider">
+                    <span>⚡ Multi-Page Standalone & Spring Boot Ready</span>
+                </div>
+                <h1 class="text-3xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
+                    The Modern Standard for <span class="bg-clip-text text-transparent bg-gradient-to-r from-indigo-400 to-purple-400">College Elections</span>
+                </h1>
+                <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+                    Welcome to the comprehensive multi-page release of <strong class="text-white">UniVote AI</strong>. Explore full Ranked-Choice Voting (Instant Runoff), cryptographic zero-knowledge secret ballot verification, interactive townhalls, and live demographic turnouts.
+                </p>
+                <div class="flex flex-wrap gap-4 pt-2 justify-center sm:justify-start">
+                    <a href="ballots.html" class="px-8 py-3.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
+                        <span>Enter Student Voter Portal</span>
+                        <span>🗳️</span>
+                    </a>
+                    <a href="rcv-simulator.html" class="px-6 py-3.5 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold rounded-xl transition flex items-center space-x-2">
+                        <span>Watch RCV Simulation</span>
+                        <span>⚡</span>
+                    </a>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-4 w-full md:w-auto">
+                <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 text-center">
+                    <div class="text-2xl sm:text-3xl font-extrabold text-indigo-400">3,420</div>
+                    <div class="text-xs text-slate-400 font-bold uppercase mt-1">SGA Ballots Cast</div>
+                </div>
+                <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 text-center">
+                    <div class="text-2xl sm:text-3xl font-extrabold text-emerald-400">100%</div>
+                    <div class="text-xs text-slate-400 font-bold uppercase mt-1">Cryptographic Audit</div>
+                </div>
+                <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 text-center">
+                    <div class="text-2xl sm:text-3xl font-extrabold text-amber-300">68.4%</div>
+                    <div class="text-xs text-slate-400 font-bold uppercase mt-1">Campus Turnout</div>
+                </div>
+                <div class="bg-slate-900/90 p-5 rounded-2xl border border-slate-800 text-center">
+                    <div class="text-2xl sm:text-3xl font-extrabold text-purple-400">0</div>
+                    <div class="text-xs text-slate-400 font-bold uppercase mt-1">Split Vote Failures</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Portal Cards Grid -->
+        <div>
+            <h2 class="text-xl font-bold text-white mb-6">Choose Your Portal Or Role</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Voter -->
+                <a href="ballots.html" class="glass-card rounded-2xl p-6 border border-slate-700/80 hover:border-indigo-500 transition-all group no-underline text-white flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-indigo-500/20 text-indigo-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            🎓
+                        </div>
+                        <h3 class="text-lg font-bold text-white">Student Voter Portal</h3>
+                        <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                            Check student eligibility by department and year, cast your ranked-choice or single-choice ballots, and receive your verifiable SHA-256 token.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-indigo-400 group-hover:text-indigo-300">
+                        <span>Cast Campus Ballots</span>
+                        <span>→</span>
+                    </div>
+                </a>
+
+                <!-- Candidate -->
+                <a href="candidate-portal.html" class="glass-card rounded-2xl p-6 border border-slate-700/80 hover:border-purple-500 transition-all group no-underline text-white flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-purple-500/20 text-purple-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            🏆
+                        </div>
+                        <h3 class="text-lg font-bold text-white">Candidate Campaign Portal</h3>
+                        <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                            Manage your official election ticket, edit your campaign slogan and 3-pillar policy manifesto, and answer student questions directly.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-purple-400 group-hover:text-purple-300">
+                        <span>Manage Ticket & Manifesto</span>
+                        <span>→</span>
+                    </div>
+                </a>
+
+                <!-- Admin / Commissioner -->
+                <a href="admin-portal.html" class="glass-card rounded-2xl p-6 border border-slate-700/80 hover:border-emerald-500 transition-all group no-underline text-white flex flex-col justify-between">
+                    <div>
+                        <div class="w-12 h-12 rounded-xl bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-2xl mb-4 group-hover:scale-110 transition-transform">
+                            🛡️
+                        </div>
+                        <h3 class="text-lg font-bold text-white">Election Commission Console</h3>
+                        <p class="text-xs text-slate-300 mt-2 leading-relaxed">
+                            Create new elections, set voting strategies (Ranked Choice vs Plurality), define department eligibility filters, and export audit CSV reports.
+                        </p>
+                    </div>
+                    <div class="mt-6 pt-4 border-t border-slate-800 flex items-center justify-between text-xs font-bold text-emerald-400 group-hover:text-emerald-300">
+                        <span>Create & Audit Elections</span>
+                        <span>→</span>
+                    </div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Quick Links to Features -->
+        <div>
+            <h2 class="text-xl font-bold text-white mb-6">Core Campus Modules</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="compare.html" class="p-5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-600 transition block no-underline text-white">
+                    <div class="text-xl mb-2">📊</div>
+                    <h4 class="font-bold text-sm">Platform Comparison</h4>
+                    <p class="text-xs text-slate-400 mt-1">Side-by-side policy matrix comparing candidate platforms.</p>
+                </a>
+                <a href="townhall.html" class="p-5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-600 transition block no-underline text-white">
+                    <div class="text-xl mb-2">💬</div>
+                    <h4 class="font-bold text-sm">Campus Townhall Q&A</h4>
+                    <p class="text-xs text-slate-400 mt-1">Ask verified questions and vote on top student concerns.</p>
+                </a>
+                <a href="ledger.html" class="p-5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-600 transition block no-underline text-white">
+                    <div class="text-xl mb-2">🔐</div>
+                    <h4 class="font-bold text-sm">Public Audit Ledger</h4>
+                    <p class="text-xs text-slate-400 mt-1">Check receipt tokens on the zero-knowledge verification ledger.</p>
+                </a>
+                <a href="dashboard.html" class="p-5 rounded-xl bg-slate-900/80 border border-slate-800 hover:border-slate-600 transition block no-underline text-white">
+                    <div class="text-xl mb-2">📈</div>
+                    <h4 class="font-bold text-sm">Turnout Analytics</h4>
+                    <p class="text-xs text-slate-400 mt-1">Live Chart.js demographic and hourly voting velocity charts.</p>
+                </a>
+            </div>
+        </div>
+    </main>
+
+    <!-- Shared Footer -->
+    <div id="shared-footer"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader('home');
+            renderFooter();
+        });
+    </script>
+</body>
+</html>

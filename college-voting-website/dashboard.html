@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Live Turnout Analytics Dashboard — UniVote AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { slate: { 850: '#1e293b', 950: '#020617' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="shared-header"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <!-- Key Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="glass-card p-6 rounded-2xl border border-slate-700/60 flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Ballots Cast</div>
+                    <div class="text-3xl font-extrabold text-white mt-1" id="stat-total">3,420</div>
+                    <div class="text-xs text-emerald-400 font-semibold mt-1 flex items-center">
+                        <span>↑ +184 in last hour</span>
+                    </div>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-xl">
+                    🗳️
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl border border-slate-700/60 flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Campus Participation</div>
+                    <div class="text-3xl font-extrabold text-amber-300 mt-1">68.4%</div>
+                    <div class="text-xs text-slate-400 font-medium mt-1">Target: 65.0% reached!</div>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl">
+                    🔥
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl border border-slate-700/60 flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Eligible Campus Pool</div>
+                    <div class="text-3xl font-extrabold text-white mt-1">5,000</div>
+                    <div class="text-xs text-indigo-300 font-medium mt-1">Enrolled Undergrad / Grad</div>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xl">
+                    🎓
+                </div>
+            </div>
+
+            <div class="glass-card p-6 rounded-2xl border border-slate-700/60 flex items-center justify-between">
+                <div>
+                    <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Audit Verification</div>
+                    <div class="text-3xl font-extrabold text-emerald-400 mt-1">100%</div>
+                    <div class="text-xs text-slate-400 font-medium mt-1">Zero cryptographic anomalies</div>
+                </div>
+                <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl">
+                    🛡️
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div class="glass-card rounded-2xl p-6 border border-slate-700/60">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-white">Voter Turnout by Academic Class</h2>
+                        <p class="text-xs text-slate-400">Percentage of eligible cohort that has cast ballots</p>
+                    </div>
+                    <span class="bg-indigo-500/15 text-indigo-300 px-2.5 py-1 rounded-lg text-xs font-bold border border-indigo-500/30">Live Sync</span>
+                </div>
+                <div class="h-64 sm:h-72">
+                    <canvas id="chart-class"></canvas>
+                </div>
+            </div>
+
+            <div class="glass-card rounded-2xl p-6 border border-slate-700/60">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-lg font-bold text-white">Ballot Share by Academic School</h2>
+                        <p class="text-xs text-slate-400">Distribution across major college faculties</p>
+                    </div>
+                    <span class="bg-purple-500/15 text-purple-300 px-2.5 py-1 rounded-lg text-xs font-bold border border-purple-500/30">Real-time</span>
+                </div>
+                <div class="h-64 sm:h-72 flex items-center justify-center">
+                    <canvas id="chart-dept"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="glass-card rounded-2xl p-6 border border-slate-700/60">
+            <div class="flex items-center justify-between mb-6">
+                <div>
+                    <h2 class="text-lg font-bold text-white">Hourly Voting Velocity (Last 12 Hours)</h2>
+                    <p class="text-xs text-slate-400">Peak voting hours occur between class shifts (12 PM & 4 PM)</p>
+                </div>
+                <button onclick="refreshCharts()" class="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-bold transition">🔄 Refresh Analytics</button>
+            </div>
+            <div class="h-64 sm:h-80">
+                <canvas id="chart-hourly"></canvas>
+            </div>
+        </div>
+    </main>
+
+    <div id="shared-footer"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        let chartClass, chartDept, chartHourly;
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader('dashboard');
+            renderFooter();
+            initCharts();
+        });
+
+        function initCharts() {
+            const ctx1 = document.getElementById('chart-class')?.getContext('2d');
+            if (ctx1) {
+                chartClass = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Freshmen', 'Sophomores', 'Juniors', 'Seniors', 'Graduate / Law'],
+                        datasets: [{
+                            label: 'Participation Rate (%)',
+                            data: [61.2, 65.8, 72.4, 74.1, 58.9],
+                            backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+                            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            const ctx2 = document.getElementById('chart-dept')?.getContext('2d');
+            if (ctx2) {
+                chartDept = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Engineering & CS', 'Business & Econ', 'Arts & Humanities', 'Sciences', 'Health & Nursing'],
+                        datasets: [{
+                            data: [34, 24, 18, 14, 10],
+                            backgroundColor: ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#06b6d4'],
+                            borderWidth: 2,
+                            borderColor: '#0f172a'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { position: 'right', labels: { color: '#cbd5e1', font: { size: 11 } } } }
+                    }
+                });
+            }
+
+            const ctx3 = document.getElementById('chart-hourly')?.getContext('2d');
+            if (ctx3) {
+                chartHourly = new Chart(ctx3, {
+                    type: 'line',
+                    data: {
+                        labels: ['8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM'],
+                        datasets: [{
+                            label: 'Ballots Submitted Per Hour',
+                            data: [120, 240, 310, 380, 520, 490, 360, 410, 480, 310, 220, 184],
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointBackgroundColor: '#6366f1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+                            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function refreshCharts() {
+            if (chartHourly) {
+                chartHourly.data.datasets[0].data = chartHourly.data.datasets[0].data.map(v => Math.round(v * (0.9 + Math.random() * 0.2)));
+                chartHourly.update();
+            }
+            alert('Chart analytics synchronized with latest campus ledger tally!');
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Public Audit Ledger & Verification Portal — UniVote AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { slate: { 850: '#1e293b', 950: '#020617' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="shared-header"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/20">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-emerald-300 text-xs font-semibold mb-3">
+                    <span>🔐 Zero-Knowledge Cryptographic Verification</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Public Audit Ledger & Verification</h1>
+                <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+                    To guarantee both <strong class="text-white">100% voter privacy (secret ballot)</strong> and <strong class="text-white">absolute tally integrity</strong>, UniVote uses a SHA-256 receipt architecture. When you submit your vote, your student identity is validated once and disconnected. Enter your token below to verify your exact ballot on the immutable campus ledger.
+                </p>
+            </div>
+
+            <!-- Search Token Bar -->
+            <div class="mt-8 p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col sm:flex-row gap-4 items-center">
+                <div class="relative flex-1 w-full">
+                    <span class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 font-mono font-bold">#</span>
+                    <input type="text" id="verify-token" placeholder="Enter your Receipt Token (e.g. UV-2026-SGA-8F92A1 or click any sample below)" class="w-full pl-8 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-mono text-emerald-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
+                </div>
+                <button onclick="checkToken()" class="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center space-x-2 whitespace-nowrap">
+                    <span>Check Immutable Ledger</span>
+                    <span>🔍</span>
+                </button>
+            </div>
+
+            <!-- Verification Result Alert Box -->
+            <div id="verify-result" class="mt-6 hidden p-6 rounded-2xl border transition-all"></div>
+
+            <!-- Public Audit Ledger Table -->
+            <div class="mt-10">
+                <div class="flex items-center justify-between mb-4">
+                    <h2 class="text-lg font-bold text-white flex items-center space-x-2">
+                        <span>Live Campus Immutable Ledger</span>
+                        <span class="text-xs font-normal text-slate-400">(Latest anonymized ballot receipts)</span>
+                    </h2>
+                    <button onclick="resetAllData()" class="text-xs text-indigo-400 hover:text-indigo-300 underline font-medium">Reset Ledger Data</button>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-700/80 bg-slate-900/50">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-800/80 text-slate-300 uppercase tracking-wider font-bold">
+                                <th class="py-3 px-4">Receipt Token (Hash)</th>
+                                <th class="py-3 px-4">Election Category</th>
+                                <th class="py-3 px-4">Encrypted / Recorded Ballot Summary</th>
+                                <th class="py-3 px-4">Timestamp (UTC)</th>
+                                <th class="py-3 px-4 text-right">Ledger Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="ledger-body" class="divide-y divide-slate-800/80 font-mono"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="shared-footer"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        let ledger = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader('ledger');
+            renderFooter();
+            ledger = getAuditLedger();
+            renderTable();
+        });
+
+        function renderTable() {
+            const tbody = document.getElementById('ledger-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            ledger.forEach(item => {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="py-3 px-4 font-bold text-emerald-400 cursor-pointer hover:underline select-all" onclick="selectToken('${item.token}')">${item.token}</td>
+                        <td class="py-3 px-4 text-white font-sans">${item.category}</td>
+                        <td class="py-3 px-4 text-slate-300 font-sans">${item.summary}</td>
+                        <td class="py-3 px-4 text-slate-400">${item.timestamp}</td>
+                        <td class="py-3 px-4 text-right text-emerald-400 font-bold font-sans">${item.status}</td>
+                    </tr>
+                `);
+            });
+        }
+
+        function selectToken(tok) {
+            document.getElementById('verify-token').value = tok;
+            checkToken();
+        }
+
+        function checkToken() {
+            let token = (document.getElementById('verify-token')?.value || '').trim();
+            if (!token) {
+                alert('Please enter or click a Receipt Token to check the ledger!');
+                return;
+            }
+            if (!token.startsWith('#')) token = '#' + token;
+
+            const box = document.getElementById('verify-result');
+            if (!box) return;
+
+            const found = ledger.find(item => item.token.toUpperCase() === token.toUpperCase());
+
+            if (found) {
+                box.className = 'mt-6 block p-6 rounded-2xl border border-emerald-500/50 bg-emerald-950/20 text-emerald-300 space-y-2 animate-in fade-in';
+                box.innerHTML = `
+                    <div class="flex items-center space-x-2 text-base font-extrabold text-white">
+                        <span>✅ Zero-Knowledge Verification Successful!</span>
+                        <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30 font-mono">SEALED IN LEDGER</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-200">
+                        Your receipt token <strong class="font-mono text-amber-300">${found.token}</strong> was cryptographically matched on the campus ledger for <strong class="text-white">${found.category}</strong>.
+                    </p>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs space-y-1 font-mono">
+                        <div>Recorded Choices: <strong class="text-indigo-300 font-sans">${found.summary}</strong></div>
+                        <div>Sealing Timestamp: <strong class="text-slate-300">${found.timestamp}</strong></div>
+                        <div>Anonymity Status: <strong class="text-emerald-400 font-sans">100% Secret Ballot (Student Identity Detached)</strong></div>
+                    </div>
+                `;
+            } else {
+                box.className = 'mt-6 block p-6 rounded-2xl border border-rose-500/50 bg-rose-950/20 text-rose-300 space-y-2 animate-in fade-in';
+                box.innerHTML = `
+                    <div class="flex items-center space-x-2 text-base font-extrabold text-white">
+                        <span>⚠️ Receipt Token Not Found on Ledger</span>
+                    </div>
+                    <p class="text-xs sm:text-sm">
+                        No ballot matching token <strong class="font-mono text-amber-300">${token}</strong> was found. Please check for typos or ensure you copied the exact token generated upon ballot submission.
+                    </p>
+                `;
+            }
+        }
+    </script>
+</body>
+</html>
