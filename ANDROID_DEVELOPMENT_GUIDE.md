@@ -67,6 +67,9 @@ Add the Internet permission and link your network security configuration:
 
         <!-- Match Finder Screen -->
         <activity android:name=".ui.MatchListActivity" android:exported="false" />
+
+        <!-- Profile Detail Screen -->
+        <activity android:name=".ui.ProfileActivity" android:exported="false" />
         
     </application>
 </manifest>
@@ -147,13 +150,16 @@ com.example.findit/
 │   │   ├── Location.java
 │   │   ├── LoginRequest.java
 │   │   ├── MatchResponse.java
-│   │   └── RegisterRequest.java
+│   │   ├── RegisterRequest.java
+│   │   ├── UpdateProfileRequest.java
+│   │   └── UserProfileResponse.java
 │   ├── network/
 │   │   ├── ApiService.java
 │   │   └── RetrofitClient.java
 │   └── repository/
 │       ├── AuthRepository.java
 │       ├── ItemRepository.java
+│       ├── UserRepository.java
 │       └── Resource.java
 ├── ui/
 │   ├── AuthViewModel.java
@@ -164,7 +170,9 @@ com.example.findit/
 │   ├── LoginActivity.java
 │   ├── MatchAdapter.java
 │   ├── MatchListActivity.java
-│   └── ReportItemActivity.java
+│   ├── ReportItemActivity.java
+│   ├── ProfileActivity.java
+│   └── UserViewModel.java
 └── utils/
     └── SessionManager.java
 ```
@@ -433,6 +441,65 @@ public class MatchResponse {
 }
 ```
 
+#### `data/models/UpdateProfileRequest.java`
+```java
+package com.example.findit.data.models;
+
+public class UpdateProfileRequest {
+    private String fullName;
+    private String phone;
+    private String rollNumber;
+    private String department;
+
+    public UpdateProfileRequest(String fullName, String phone, String rollNumber, String department) {
+        this.fullName = fullName;
+        this.phone = phone;
+        this.rollNumber = rollNumber;
+        this.department = department;
+    }
+
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getRollNumber() { return rollNumber; }
+    public void setRollNumber(String rollNumber) { this.rollNumber = rollNumber; }
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+}
+```
+
+#### `data/models/UserProfileResponse.java`
+```java
+package com.example.findit.data.models;
+
+public class UserProfileResponse {
+    private Long id;
+    private String email;
+    private String fullName;
+    private String phone;
+    private String rollNumber;
+    private String department;
+    private String role;
+
+    // Getters and Setters
+    public Long getId() { return id; }
+    public void setId(Long id) { this.id = id; }
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+    public String getFullName() { return fullName; }
+    public void setFullName(String fullName) { this.fullName = fullName; }
+    public String getPhone() { return phone; }
+    public void setPhone(String phone) { this.phone = phone; }
+    public String getRollNumber() { return rollNumber; }
+    public void setRollNumber(String rollNumber) { this.rollNumber = rollNumber; }
+    public String getDepartment() { return department; }
+    public void setDepartment(String department) { this.department = department; }
+    public String getRole() { return role; }
+    public void setRole(String role) { this.role = role; }
+}
+```
+
 ---
 
 ### 2. Utilities: Local Storage & Session Manager
@@ -473,6 +540,11 @@ public class SessionManager {
         editor.putString(KEY_JWT_TOKEN, token);
         editor.putLong(KEY_USER_ID, userId);
         editor.putString(KEY_USER_EMAIL, email);
+        editor.putString(KEY_USER_NAME, fullName);
+        editor.apply();
+    }
+
+    public void updateLocalName(String fullName) {
         editor.putString(KEY_USER_NAME, fullName);
         editor.apply();
     }
@@ -596,6 +668,13 @@ public interface ApiService {
 
     @POST("api/auth/login")
     Call<AuthResponse> login(@Body LoginRequest request);
+
+    // ==================== USER PROFILE ====================
+    @GET("api/users/profile/{id}")
+    Call<UserProfileResponse> getUserProfile(@Path("id") Long id);
+
+    @PUT("api/users/profile/{id}")
+    Call<UserProfileResponse> updateProfile(@Path("id") Long id, @Body UpdateProfileRequest request);
 
     // ==================== ITEMS ====================
     @POST("api/items/report/{userId}")
@@ -724,6 +803,82 @@ public class AuthRepository {
 
     public void logout() {
         sessionManager.logout();
+    }
+}
+```
+
+#### `data/repository/UserRepository.java`
+```java
+package com.example.findit.data.repository;
+
+import android.content.Context;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.LiveData;
+import androidx.lifecycle.MutableLiveData;
+import com.example.findit.data.models.UpdateProfileRequest;
+import com.example.findit.data.models.UserProfileResponse;
+import com.example.findit.data.network.ApiService;
+import com.example.findit.data.network.RetrofitClient;
+import com.example.findit.utils.SessionManager;
+import retrofit2.Call;
+import retrofit2.Callback;
+import retrofit2.Response;
+
+public class UserRepository {
+    private final ApiService apiService;
+    private final SessionManager sessionManager;
+
+    public UserRepository(Context context) {
+        apiService = RetrofitClient.getClient(context).create(ApiService.class);
+        sessionManager = SessionManager.getInstance(context);
+    }
+
+    public LiveData<Resource<UserProfileResponse>> getUserProfile(Long id) {
+        MutableLiveData<Resource<UserProfileResponse>> result = new MutableLiveData<>();
+        result.setValue(Resource.loading());
+
+        apiService.getUserProfile(id).enqueue(new Callback<UserProfileResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<UserProfileResponse> call, @NonNull Response<UserProfileResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    result.setValue(Resource.success(response.body()));
+                } else {
+                    result.setValue(Resource.error("Failed to load user profile."));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<UserProfileResponse> call, @NonNull Throwable t) {
+                result.setValue(Resource.error("Network error: " + t.getMessage()));
+            }
+        });
+
+        return result;
+    }
+
+    public LiveData<Resource<UserProfileResponse>> updateProfile(Long id, UpdateProfileRequest request) {
+        MutableLiveData<Resource<UserProfileResponse>> result = new MutableLiveData<>();
+        result.setValue(Resource.loading());
+
+        apiService.updateProfile(id, request).enqueue(new Callback<UserProfileResponse>() {
+            @Override
+            public void onResponse(@NonNull Call<UserProfileResponse> call, @NonNull Response<UserProfileResponse> response) {
+                if (response.isSuccessful() && response.body() != null) {
+                    // Update locally saved name just in case it was changed
+                    sessionManager.updateLocalName(response.body().getFullName());
+                    result.setValue(Resource.success(response.body()));
+                } else {
+                    result.setValue(Resource.error("Failed to update profile."));
+                }
+            }
+
+            @Override
+            public void onFailure(@NonNull Call<UserProfileResponse> call, @NonNull Throwable t) {
+                result.setValue(Resource.error("Network error: " + t.getMessage()));
+            }
+        });
+
+        return result;
     }
 }
 ```
@@ -875,6 +1030,37 @@ public class AuthViewModel extends AndroidViewModel {
 
     public void logout() {
         authRepository.logout();
+    }
+}
+```
+
+#### `ui/UserViewModel.java`
+```java
+package com.example.findit.ui;
+
+import android.app.Application;
+import androidx.annotation.NonNull;
+import androidx.lifecycle.AndroidViewModel;
+import androidx.lifecycle.LiveData;
+import com.example.findit.data.models.UpdateProfileRequest;
+import com.example.findit.data.models.UserProfileResponse;
+import com.example.findit.data.repository.Resource;
+import com.example.findit.data.repository.UserRepository;
+
+public class UserViewModel extends AndroidViewModel {
+    private final UserRepository userRepository;
+
+    public UserViewModel(@NonNull Application application) {
+        super(application);
+        userRepository = new UserRepository(application);
+    }
+
+    public LiveData<Resource<UserProfileResponse>> getUserProfile(Long id) {
+        return userRepository.getUserProfile(id);
+    }
+
+    public LiveData<Resource<UserProfileResponse>> updateProfile(Long id, UpdateProfileRequest request) {
+        return userRepository.updateProfile(id, request);
     }
 }
 ```
@@ -1095,7 +1281,7 @@ public class LoginActivity extends AppCompatActivity {
         android:textStyle="bold"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        android:layout_marginTop="40dp" />
+        android:layout_marginTop="24dp" />
 
     <TextView
         android:id="@+id/tvSub"
@@ -1104,6 +1290,7 @@ public class LoginActivity extends AppCompatActivity {
         android:text="What would you like to do today?"
         android:textSize="16sp"
         android:textColor="#555"
+        app:layout_parent_top="false"
         app:layout_constraintTop_toBottomOf="@id/tvWelcome"
         app:layout_constraintStart_toStartOf="parent"
         android:layout_marginTop="8dp" />
@@ -1111,13 +1298,13 @@ public class LoginActivity extends AppCompatActivity {
     <androidx.cardview.widget.CardView
         android:id="@+id/cardReport"
         android:layout_width="0dp"
-        android:layout_height="130dp"
+        android:layout_height="110dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="4dp"
         app:layout_constraintTop_toBottomOf="@id/tvSub"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginTop="40dp"
+        android:layout_marginTop="32dp"
         android:foreground="?android:attr/selectableItemBackground"
         android:clickable="true">
         <RelativeLayout
@@ -1139,7 +1326,7 @@ public class LoginActivity extends AppCompatActivity {
     <androidx.cardview.widget.CardView
         android:id="@+id/cardLost"
         android:layout_width="0dp"
-        android:layout_height="110dp"
+        android:layout_height="100dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="4dp"
         app:layout_constraintTop_toBottomOf="@id/cardReport"
@@ -1168,7 +1355,7 @@ public class LoginActivity extends AppCompatActivity {
     <androidx.cardview.widget.CardView
         android:id="@+id/cardFound"
         android:layout_width="0dp"
-        android:layout_height="110dp"
+        android:layout_height="100dp"
         app:cardCornerRadius="12dp"
         app:cardElevation="4dp"
         app:layout_constraintTop_toBottomOf="@id/cardReport"
@@ -1194,6 +1381,34 @@ public class LoginActivity extends AppCompatActivity {
         </RelativeLayout>
     </androidx.cardview.widget.CardView>
 
+    <androidx.cardview.widget.CardView
+        android:id="@+id/cardProfile"
+        android:layout_width="0dp"
+        android:layout_height="100dp"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/cardLost"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="20dp"
+        android:foreground="?android:attr/selectableItemBackground"
+        android:clickable="true">
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:padding="16dp"
+            android:background="#9C27B0">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="👤 My Profile"
+                android:textColor="#fff"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                android:layout_centerVertical="true"/>
+        </RelativeLayout>
+    </androidx.cardview.widget.CardView>
+
     <Button
         android:id="@+id/btnLogout"
         android:layout_width="wrap_content"
@@ -1203,7 +1418,7 @@ public class LoginActivity extends AppCompatActivity {
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:layout_marginBottom="32dp" />
+        android:layout_marginBottom="24dp" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>
 ```
@@ -1223,19 +1438,21 @@ import com.example.findit.utils.SessionManager;
 
 public class DashboardActivity extends AppCompatActivity {
 
+    private TextView tvWelcome;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_dashboard);
 
-        TextView tvWelcome = findViewById(R.id.tvWelcome);
+        tvWelcome = findViewById(R.id.tvWelcome);
         CardView cardReport = findViewById(R.id.cardReport);
         CardView cardLost = findViewById(R.id.cardLost);
         CardView cardFound = findViewById(R.id.cardFound);
+        CardView cardProfile = findViewById(R.id.cardProfile);
         Button btnLogout = findViewById(R.id.btnLogout);
 
         SessionManager session = SessionManager.getInstance(this);
-        tvWelcome.setText("Welcome, " + session.getUserName() + "!");
 
         // 📝 Report Screen Trigger
         cardReport.setOnClickListener(v -> {
@@ -1256,6 +1473,11 @@ public class DashboardActivity extends AppCompatActivity {
             startActivity(intent);
         });
 
+        // 👤 Profile Screen Trigger
+        cardProfile.setOnClickListener(v -> {
+            startActivity(new Intent(this, ProfileActivity.class));
+        });
+
         // 🟥 Logout Trigger
         btnLogout.setOnClickListener(v -> {
             session.logout();
@@ -1264,6 +1486,14 @@ public class DashboardActivity extends AppCompatActivity {
             startActivity(intent);
             finish();
         });
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // Refresh welcome header name dynamically if changed in profile activity
+        SessionManager session = SessionManager.getInstance(this);
+        tvWelcome.setText("Welcome, " + session.getUserName() + "!");
     }
 }
 ```
@@ -1293,6 +1523,7 @@ public class DashboardActivity extends AppCompatActivity {
             android:text="📝 Report Item"
             android:textSize="26sp"
             android:textStyle="bold"
+            app:layout_parent_top="true"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintStart_toStartOf="parent"/>
 
@@ -2086,7 +2317,229 @@ public class MatchListActivity extends AppCompatActivity {
 
 ---
 
-## 🚀 Part 11: Running & testing your integration
+### 11. UI Layer: Core Screens - User Profile Screen (New Profile Feature!)
+
+#### Layout: `res/layout/activity_profile.xml`
+```xml
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fillViewport="true">
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:padding="24dp">
+
+        <TextView
+            android:id="@+id/tvProfileTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="👤 My Profile"
+            android:textSize="26sp"
+            android:textStyle="bold"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintStart_toStartOf="parent"/>
+
+        <EditText
+            android:id="@+id/etEmail"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Email Address"
+            android:inputType="textEmailAddress"
+            android:enabled="false"
+            android:textColor="#888"
+            app:layout_constraintTop_toBottomOf="@id/tvProfileTitle"
+            android:layout_marginTop="32dp" />
+
+        <EditText
+            android:id="@+id/etFullName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Full Name"
+            android:inputType="textPersonName"
+            app:layout_constraintTop_toBottomOf="@id/etEmail"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/etPhone"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Phone Number"
+            android:inputType="phone"
+            app:layout_constraintTop_toBottomOf="@id/etFullName"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/etRollNumber"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Roll Number (e.g. CS2026001)"
+            app:layout_constraintTop_toBottomOf="@id/etPhone"
+            android:layout_marginTop="16dp" />
+
+        <EditText
+            android:id="@+id/etDepartment"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Department"
+            app:layout_constraintTop_toBottomOf="@id/etRollNumber"
+            android:layout_marginTop="16dp" />
+
+        <Button
+            android:id="@+id/btnUpdateProfile"
+            android:layout_width="match_parent"
+            android:layout_height="55dp"
+            android:text="UPDATE PROFILE"
+            android:textSize="16sp"
+            app:layout_constraintTop_toBottomOf="@id/etDepartment"
+            android:layout_marginTop="32dp" />
+
+        <ProgressBar
+            android:id="@+id/progressBarProfile"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:visibility="gone"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+
+    </androidx.constraintlayout.widget.ConstraintLayout>
+</ScrollView>
+```
+
+#### Activity: `ui/ProfileActivity.java`
+```java
+package com.example.findit.ui;
+
+import android.os.Bundle;
+import android.view.View;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.ProgressBar;
+import android.widget.Toast;
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.lifecycle.ViewModelProvider;
+import com.example.findit.R;
+import com.example.findit.data.models.UpdateProfileRequest;
+import com.example.findit.data.models.UserProfileResponse;
+import com.example.findit.utils.SessionManager;
+
+public class ProfileActivity extends AppCompatActivity {
+
+    private EditText etEmail, etFullName, etPhone, etRollNumber, etDepartment;
+    private Button btnUpdate;
+    private ProgressBar progressBar;
+    private UserViewModel userViewModel;
+    private Long userId;
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+        setContentView(R.layout.activity_profile);
+
+        // Bind Views
+        etEmail = findViewById(R.id.etEmail);
+        etFullName = findViewById(R.id.etFullName);
+        etPhone = findViewById(R.id.etPhone);
+        etRollNumber = findViewById(R.id.etRollNumber);
+        etDepartment = findViewById(R.id.etDepartment);
+        btnUpdate = findViewById(R.id.btnUpdateProfile);
+        progressBar = findViewById(R.id.progressBarProfile);
+
+        userId = SessionManager.getInstance(this).getUserId();
+
+        userViewModel = new ViewModelProvider(this).get(UserViewModel.class);
+
+        loadProfileData();
+
+        btnUpdate.setOnClickListener(v -> saveProfileData());
+    }
+
+    private void loadProfileData() {
+        userViewModel.getUserProfile(userId).observe(this, resource -> {
+            if (resource == null) return;
+
+            switch (resource.status) {
+                case LOADING:
+                    progressBar.setVisibility(View.VISIBLE);
+                    setFormEnabled(false);
+                    break;
+                case SUCCESS:
+                    progressBar.setVisibility(View.GONE);
+                    setFormEnabled(true);
+                    populateFields(resource.data);
+                    break;
+                case ERROR:
+                    progressBar.setVisibility(View.GONE);
+                    setFormEnabled(true);
+                    Toast.makeText(this, resource.message, Toast.LENGTH_LONG).show();
+                    break;
+            }
+        });
+    }
+
+    private void saveProfileData() {
+        String fullName = etFullName.getText().toString().trim();
+        String phone = etPhone.getText().toString().trim();
+        String rollNumber = etRollNumber.getText().toString().trim();
+        String department = etDepartment.getText().toString().trim();
+
+        if (fullName.isEmpty()) {
+            Toast.makeText(this, "Full Name is required", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        UpdateProfileRequest req = new UpdateProfileRequest(fullName, phone, rollNumber, department);
+
+        userViewModel.updateProfile(userId, req).observe(this, resource -> {
+            if (resource == null) return;
+
+            switch (resource.status) {
+                case LOADING:
+                    progressBar.setVisibility(View.VISIBLE);
+                    btnUpdate.setEnabled(false);
+                    break;
+                case SUCCESS:
+                    progressBar.setVisibility(View.GONE);
+                    btnUpdate.setEnabled(true);
+                    Toast.makeText(this, "Profile Updated Successfully!", Toast.LENGTH_SHORT).show();
+                    finish();
+                    break;
+                case ERROR:
+                    progressBar.setVisibility(View.GONE);
+                    btnUpdate.setEnabled(true);
+                    Toast.makeText(this, resource.message, Toast.LENGTH_LONG).show();
+                    break;
+            }
+        });
+    }
+
+    private void setFormEnabled(boolean enabled) {
+        etFullName.setEnabled(enabled);
+        etPhone.setEnabled(enabled);
+        etRollNumber.setEnabled(enabled);
+        etDepartment.setEnabled(enabled);
+        btnUpdate.setEnabled(enabled);
+    }
+
+    private void populateFields(UserProfileResponse profile) {
+        if (profile == null) return;
+        etEmail.setText(profile.getEmail());
+        etFullName.setText(profile.getFullName());
+        etPhone.setText(profile.getPhone() != null ? profile.getPhone() : "");
+        etRollNumber.setText(profile.getRollNumber() != null ? profile.getRollNumber() : "");
+        etDepartment.setText(profile.getDepartment() != null ? profile.getDepartment() : "");
+    }
+}
+```
+
+---
+
+## 🚀 Part 12: Running & testing your integration
 
 1. **Start the backend locally**: Ensure your Spring Boot backend is active and running on your main system.
    ```bash
