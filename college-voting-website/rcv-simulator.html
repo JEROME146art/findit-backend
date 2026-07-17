@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ranked-Choice Instant Runoff Simulator — UniVote AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { slate: { 850: '#1e293b', 950: '#020617' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="shared-header"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60 bg-gradient-to-br from-slate-900 via-slate-900 to-purple-950/30">
+            <div class="max-w-3xl">
+                <div class="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full text-purple-300 text-xs font-semibold mb-3">
+                    <span>⚡ Instant-Runoff Voting (IRV) Mathematical Engine</span>
+                </div>
+                <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Ranked-Choice Elimination Simulator</h1>
+                <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+                    Why does our college use <strong class="text-white">Ranked-Choice Voting</strong>? In traditional elections with 4 candidates, someone can win with only <strong class="text-amber-400">26%</strong> of the vote despite 74% of the campus preferring someone else! With Ranked-Choice, if no candidate achieves <strong class="text-emerald-400">&gt;50% majority</strong> in Round 1, the candidate with the fewest votes is eliminated and their voters' 2nd choices are transferred automatically until a true majority winner emerges.
+                </p>
+            </div>
+
+            <!-- Interactive Controls -->
+            <div class="mt-8 p-6 rounded-2xl bg-slate-800/80 border border-slate-700 flex flex-wrap items-center justify-between gap-4">
+                <div class="flex items-center space-x-3">
+                    <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Simulation Stage:</span>
+                    <span id="rcv-stage-badge" class="px-3 py-1 rounded-full bg-indigo-600 text-white text-xs font-bold">Round 1 (Initial First-Choice Tally)</span>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                    <button onclick="runRound(1)" id="rcv-btn-1" class="px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow transition">Round 1: Initial Count</button>
+                    <button onclick="runRound(2)" id="rcv-btn-2" class="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold shadow transition">Round 2: Eliminate Elena Rostova (8%)</button>
+                    <button onclick="runRound(3)" id="rcv-btn-3" class="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold shadow transition">Round 3: Eliminate Marcus Thorne (18%) -> Winner!</button>
+                    <button onclick="runRound(1)" class="px-3.5 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition">Reset Simulation</button>
+                </div>
+            </div>
+
+            <!-- Simulation Visualizer Table & Bar Chart -->
+            <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                <div class="lg:col-span-1 glass-card p-6 rounded-2xl border border-slate-700 space-y-4">
+                    <h2 class="text-base font-bold text-white flex items-center space-x-2">
+                        <span>ℹ️ What Happened In This Round?</span>
+                    </h2>
+                    <div id="rcv-desc" class="text-xs text-slate-300 leading-relaxed space-y-3"></div>
+                </div>
+
+                <div class="lg:col-span-2 glass-card p-6 rounded-2xl border border-slate-700 space-y-6">
+                    <div class="flex items-center justify-between">
+                        <h2 class="text-base font-bold text-white">Live Runoff Tally Breakdown</h2>
+                        <span class="text-xs text-slate-400">Total Valid Ballots: <strong class="text-white">3,420</strong> (Threshold: <strong class="text-emerald-400">1,711</strong> for Majority)</span>
+                    </div>
+                    <div id="rcv-bars" class="space-y-5"></div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="shared-footer"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader('rcv');
+            renderFooter();
+            runRound(1);
+        });
+
+        function runRound(n) {
+            const stage = document.getElementById('rcv-stage-badge');
+            const desc = document.getElementById('rcv-desc');
+            const bars = document.getElementById('rcv-bars');
+
+            [1, 2, 3].forEach(idx => {
+                const b = document.getElementById(`rcv-btn-${idx}`);
+                if (b) {
+                    if (idx === n) b.className = 'px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow transition';
+                    else b.className = 'px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold shadow transition';
+                }
+            });
+
+            if (n === 1) {
+                if (stage) stage.innerText = 'Round 1 (Initial First-Choice Tally)';
+                if (desc) desc.innerHTML = `
+                    <p><strong class="text-white">Round 1 Status:</strong> All first-choice votes have been tallied across the 3,420 cast ballots for SGA Executive.</p>
+                    <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                        <li><strong>Alex Rivera & Maya Lin:</strong> 1,368 votes (40.0%)</li>
+                        <li><strong>Jordan Vance & Chloe Bennett:</strong> 1,163 votes (34.0%)</li>
+                        <li><strong>Marcus Thorne & Liam O'Connor:</strong> 615 votes (18.0%)</li>
+                        <li><strong>Elena Rostova & David Kim:</strong> 274 votes (8.0%)</li>
+                    </ul>
+                    <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 font-semibold mt-2">
+                        ⚠️ No candidate reached the 50% majority threshold (1,711 votes required). Candidate with lowest votes (<strong class="text-white">Elena Rostova - 8%</strong>) is eliminated!
+                    </div>
+                `;
+
+                bars.innerHTML = barHtml('Alex Rivera & Maya Lin', 1368, 40.0, 'from-indigo-600 to-purple-600', false, false) +
+                                 barHtml('Jordan Vance & Chloe Bennett', 1163, 34.0, 'from-purple-600 to-pink-600', false, false) +
+                                 barHtml('Marcus Thorne & Liam O\'Connor', 615, 18.0, 'from-amber-600 to-orange-600', false, false) +
+                                 barHtml('Elena Rostova & David Kim', 274, 8.0, 'from-rose-600 to-red-600', true, false);
+            } else if (n === 2) {
+                if (stage) stage.innerText = 'Round 2 (Transferring Elena Rostova\'s 2nd-Choice Votes)';
+                if (desc) desc.innerHTML = `
+                    <p><strong class="text-white">Round 2 Status:</strong> Elena Rostova's 274 ballots were examined for their 2nd preference: <strong class="text-emerald-400">140 transferred to Alex Rivera</strong>, <strong class="text-emerald-400">94 to Jordan Vance</strong>, and <strong class="text-emerald-400">40 to Marcus Thorne</strong>.</p>
+                    <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                        <li><strong>Alex Rivera & Maya Lin:</strong> 1,508 votes (44.1%)</li>
+                        <li><strong>Jordan Vance & Chloe Bennett:</strong> 1,257 votes (36.8%)</li>
+                        <li><strong>Marcus Thorne & Liam O'Connor:</strong> 655 votes (19.1%)</li>
+                        <li><span class="line-through text-slate-500">Elena Rostova & David Kim (Eliminated)</span></li>
+                    </ul>
+                    <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 font-semibold mt-2">
+                        ⚠️ Still no majority &gt;50%. Candidate with lowest remaining tally (<strong class="text-white">Marcus Thorne - 19.1%</strong>) is eliminated next!
+                    </div>
+                `;
+
+                bars.innerHTML = barHtml('Alex Rivera & Maya Lin', 1508, 44.1, 'from-indigo-600 to-purple-600', false, false, '+140 transfer') +
+                                 barHtml('Jordan Vance & Chloe Bennett', 1257, 36.8, 'from-purple-600 to-pink-600', false, false, '+94 transfer') +
+                                 barHtml('Marcus Thorne & Liam O\'Connor', 655, 19.1, 'from-amber-600 to-orange-600', true, false, '+40 transfer') +
+                                 barHtml('Elena Rostova & David Kim (Eliminated)', 0, 0, 'from-slate-700 to-slate-800', true, false);
+            } else if (n === 3) {
+                if (stage) stage.innerText = 'Round 3 (Transferring Marcus Thorne\'s Votes -> Winner Declared!)';
+                if (desc) desc.innerHTML = `
+                    <p><strong class="text-white font-bold text-emerald-400">🎉 Majority Winner Crowned!</strong> Marcus Thorne's 655 ballots redistributed: <strong class="text-emerald-400">346 transferred to Alex Rivera</strong> and <strong class="text-emerald-400">309 to Jordan Vance</strong>.</p>
+                    <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                        <li class="text-emerald-300 font-bold">👑 Alex Rivera & Maya Lin: 1,854 votes (54.2%) — WINNER!</li>
+                        <li><strong>Jordan Vance & Chloe Bennett:</strong> 1,566 votes (45.8%)</li>
+                    </ul>
+                    <div class="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-300 font-bold mt-2 flex items-center space-x-2">
+                        <span>🏆 Alex Rivera & Maya Lin cross the 1,711 majority threshold with 54.2% of final ranked preferences!</span>
+                    </div>
+                `;
+
+                bars.innerHTML = barHtml('Alex Rivera & Maya Lin (WINNER 👑)', 1854, 54.2, 'from-emerald-500 to-teal-600', false, true, '+346 transfer') +
+                                 barHtml('Jordan Vance & Chloe Bennett', 1566, 45.8, 'from-purple-600 to-pink-600', false, false, '+309 transfer') +
+                                 barHtml('Marcus Thorne & Liam O\'Connor (Eliminated)', 0, 0, 'from-slate-700 to-slate-800', true, false) +
+                                 barHtml('Elena Rostova & David Kim (Eliminated)', 0, 0, 'from-slate-700 to-slate-800', true, false);
+            }
+        }
+
+        function barHtml(name, votes, pct, grad, elim, win, trans) {
+            return `
+                <div class="space-y-1.5 transition-all">
+                    <div class="flex items-center justify-between text-xs sm:text-sm font-bold">
+                        <span class="${win ? 'text-emerald-300 font-extrabold text-base' : (elim ? 'text-slate-500 line-through' : 'text-white')}">${name} ${trans ? `<span class="text-xs text-amber-400 ml-1.5 font-normal">(${trans})</span>` : ''}</span>
+                        <span class="${win ? 'text-emerald-300' : 'text-slate-300'}">${votes.toLocaleString()} votes (${pct}%)</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-6 rounded-xl overflow-hidden p-0.5 border border-slate-700 flex items-center">
+                        <div class="h-full rounded-lg bg-gradient-to-r ${grad} transition-all duration-700 flex items-center justify-end px-2" style="width: ${Math.max(pct, 2)}%;">
+                            ${pct > 12 ? `<span class="text-[10px] text-white font-extrabold">${pct}%</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Election Commission Console — UniVote AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { slate: { 850: '#1e293b', 950: '#020617' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="shared-header"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60 bg-gradient-to-br from-slate-900 to-purple-950/40">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                    <div class="inline-flex items-center space-x-2 bg-purple-500/20 px-3 py-1 rounded-full text-purple-300 text-xs font-bold mb-2 border border-purple-500/30">
+                        <span>🛡️ Election Commission / Admin Console</span>
+                    </div>
+                    <h1 class="text-2xl font-extrabold text-white">Create & Configure Campus Ballots</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">Manage active voting strategies, department rules, and public audit exports.</p>
+                </div>
+                <a href="ballots.html" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition self-start sm:self-center no-underline">← Return to Voter Mode</a>
+            </div>
+
+            <!-- Create Election Wizard Form -->
+            <div class="glass-card p-6 rounded-2xl border border-slate-700/80 space-y-6">
+                <h2 class="text-lg font-bold text-white border-b border-slate-800 pb-3 flex items-center justify-between">
+                    <span>⚡ Launch New Campus Election or Referendum</span>
+                    <span class="text-xs text-indigo-400 font-normal">Instant Live Deployment</span>
+                </h2>
+
+                <form onsubmit="createElection(event)" class="space-y-5 text-xs sm:text-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">Election / Position Title</label>
+                            <input type="text" id="admin-title" required placeholder="E.g., Senior Class President 2026-2027" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">Category</label>
+                            <select id="admin-cat" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                                <option value="SGA">SGA Executive / Student Government</option>
+                                <option value="SENATE">Academic School Senate</option>
+                                <option value="DORM">Dormitory / Housing Council</option>
+                                <option value="REFERENDUM">Campus-Wide Referendum / Proposition</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">Voting Strategy</label>
+                            <select id="admin-strat" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                                <option value="RCV">Ranked-Choice Voting (Instant Runoff)</option>
+                                <option value="PLURALITY">Plurality (Single-Choice Radio)</option>
+                                <option value="REFERENDUM">Yes / No / Abstain Proposition</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">Voter Eligibility Rule</label>
+                            <select id="admin-elig" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                                <option value="All Enrolled Students (Freshman - Graduate)">All Enrolled Students (Freshman - Graduate)</option>
+                                <option value="Senior Cohort Only (Class of 2026)">Senior Cohort Only (Class of 2026)</option>
+                                <option value="Engineering & Computer Science Majors Only">Engineering & Computer Science Majors Only</option>
+                                <option value="On-Campus Dorm Residents Only">On-Campus Dorm Residents Only</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">Candidates (Comma-separated or Proposition Text)</label>
+                            <input type="text" id="admin-cands" required placeholder="E.g., Taylor Swift & Travis Kelce, Sam Altman & Jensen Huang, Ada Lovelace & Alan Turing" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                        </div>
+                    </div>
+
+                    <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+                        <div class="text-xs text-slate-400">
+                            When launched, this ballot will immediately appear under the <strong class="text-white">Active Elections & Ballots</strong> tab with live cryptographic verification.
+                        </div>
+                        <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition flex items-center space-x-2">
+                            <span>🚀 Launch Live Election Now</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Admin Management Table -->
+            <div class="glass-card p-6 rounded-2xl border border-slate-700/80 space-y-4">
+                <div class="flex items-center justify-between">
+                    <h2 class="text-lg font-bold text-white">Live Election Governance & Audit Export</h2>
+                    <button onclick="exportCsv()" class="px-3.5 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition flex items-center space-x-1.5">
+                        <span>📥 Export Anonymized Audit CSV</span>
+                    </button>
+                </div>
+
+                <div class="overflow-x-auto rounded-xl border border-slate-700/80 bg-slate-900/50">
+                    <table class="w-full text-left border-collapse text-xs">
+                        <thead>
+                            <tr class="border-b border-slate-800 bg-slate-800/80 text-slate-300 uppercase font-bold">
+                                <th class="py-3 px-4">Election ID & Title</th>
+                                <th class="py-3 px-4">Strategy</th>
+                                <th class="py-3 px-4">Eligibility</th>
+                                <th class="py-3 px-4">Turnout Count</th>
+                                <th class="py-3 px-4">Status</th>
+                                <th class="py-3 px-4 text-right">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="admin-table" class="divide-y divide-slate-800/80 font-medium"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <div id="shared-footer"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        let elections = [];
+
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader('admin');
+            renderFooter();
+            elections = getElections();
+            renderAdminTable();
+        });
+
+        function createElection(e) {
+            e.preventDefault();
+            const title = document.getElementById('admin-title').value;
+            const category = document.getElementById('admin-cat').value;
+            const strategy = document.getElementById('admin-strat').value;
+            const eligibility = document.getElementById('admin-elig').value;
+            const candsStr = document.getElementById('admin-cands').value;
+
+            const candList = candsStr.split(',').map((name, idx) => ({
+                id: 'new-cand-' + Date.now() + idx,
+                name: name.trim(),
+                slogan: 'Official nominee for ' + title,
+                bio: 'Verified student candidate dedicated to representing campus interests.',
+                academic: 'Committed to academic excellence and library study resources.',
+                sustainability: 'Advocating for campus sustainability and waste reduction.',
+                housing: 'Working to improve dorm facilities and dining service satisfaction.',
+                votes: 0
+            }));
+
+            const newElection = {
+                id: 'ELEC-' + Math.floor(100 + Math.random() * 900),
+                title: title,
+                category: category,
+                votingStrategy: strategy,
+                eligibility: eligibility,
+                status: 'Live',
+                closesIn: '48 hours, 00 mins',
+                totalVotes: 0,
+                hasVoted: false,
+                candidates: candList
+            };
+
+            elections.unshift(newElection);
+            saveElections(elections);
+            document.getElementById('admin-title').value = '';
+            document.getElementById('admin-cands').value = '';
+
+            renderAdminTable();
+            alert(`New campus ballot "${title}" launched successfully! You can visit the Student Voter Portal to cast ranked votes on it immediately.`);
+        }
+
+        function renderAdminTable() {
+            const tbody = document.getElementById('admin-table');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            elections.forEach(e => {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="py-3 px-4 font-bold text-white">${e.id} - ${e.title}</td>
+                        <td class="py-3 px-4"><span class="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded text-xs font-bold">${e.votingStrategy}</span></td>
+                        <td class="py-3 px-4 text-slate-300 text-xs">${e.eligibility}</td>
+                        <td class="py-3 px-4 font-mono font-bold text-emerald-400">${e.totalVotes.toLocaleString()}</td>
+                        <td class="py-3 px-4"><span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-xs font-bold">🟢 Live</span></td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="alert('Poll status toggled.')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs">Toggle Close</button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function exportCsv() {
+            const ledger = getAuditLedger();
+            let csv = 'Receipt Token,Election Category,Recorded Choice Summary,Timestamp,Status\n';
+            ledger.forEach(item => {
+                csv += `"${item.token}","${item.category}","${item.summary}","${item.timestamp}","${item.status}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "univote_audit_ledger_export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+    </script>
+</body>
+</html>

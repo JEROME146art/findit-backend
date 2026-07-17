@@ -1,0 +1,1899 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>UniVote AI — Modern Campus Election & Civic Platform</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Plus Jakarta Sans', 'Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#eef2ff',
+                            100: '#e0e7ff',
+                            500: '#6366f1',
+                            600: '#4f46e5',
+                            700: '#4338ca',
+                            900: '#312e81',
+                        },
+                        slate: {
+                            850: '#1e293b',
+                            950: '#020617',
+                        }
+                    },
+                    boxShadow: {
+                        'glow': '0 0 25px -5px rgba(99, 102, 241, 0.3)',
+                        'glow-lg': '0 0 40px -10px rgba(99, 102, 241, 0.5)',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar & glass transitions */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 0.6);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(99, 102, 241, 0.4);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(99, 102, 241, 0.7);
+        }
+        .glass-card {
+            background: rgba(30, 41, 59, 0.7);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .glass-card-light {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(226, 232, 240, 0.8);
+        }
+        .tab-btn.active {
+            background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%);
+            color: #ffffff;
+            box-shadow: 0 4px 15px -3px rgba(99, 102, 241, 0.4);
+            border-color: transparent;
+        }
+        .pulse-dot {
+            animation: pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-ring {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(1.2); }
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen font-sans antialiased transition-colors duration-300 selection:bg-indigo-500 selection:text-white" id="main-body">
+
+    <!-- Top Announcement Banner -->
+    <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-pink-600 text-white text-xs sm:text-sm font-semibold py-2 px-4 shadow-lg flex items-center justify-between z-50 relative">
+        <div class="flex items-center space-x-2 max-w-7xl mx-auto w-full justify-between">
+            <div class="flex items-center space-x-2">
+                <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-white/20 uppercase tracking-wide">Live Campus Audit</span>
+                <span>🔥 Spring 2026 Student Government & Senate Elections are open! Cast your verifiable Ranked-Choice ballot before 11:59 PM.</span>
+            </div>
+            <div class="hidden md:flex items-center space-x-4 text-xs font-medium bg-black/20 px-3 py-1 rounded-full border border-white/15">
+                <span class="flex items-center"><span class="w-2 h-2 rounded-full bg-emerald-400 inline-block mr-1.5 pulse-dot"></span> Cryptographic Ledger: Online</span>
+                <span>•</span>
+                <span>Turnout: <strong id="top-turnout-pct" class="text-amber-300">68.4%</strong></span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header Navigation -->
+    <header class="sticky top-0 z-40 bg-slate-900/80 dark:bg-slate-900/80 border-b border-slate-800/80 backdrop-blur-md transition-colors" id="main-header">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-20">
+                <!-- Logo -->
+                <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('ballots')">
+                    <div class="w-11 h-11 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-500 flex items-center justify-center shadow-glow text-white font-extrabold text-xl tracking-tighter">
+                        UV
+                    </div>
+                    <div>
+                        <div class="flex items-center space-x-2">
+                            <span class="font-extrabold text-xl sm:text-2xl tracking-tight bg-clip-text text-transparent bg-gradient-to-r from-white via-indigo-100 to-indigo-300 dark:from-white dark:to-indigo-300">UniVote<span class="text-indigo-400">.ai</span></span>
+                            <span class="bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-[10px] font-bold px-2 py-0.5 rounded-full uppercase tracking-wider hidden sm:inline-block">College Edition</span>
+                        </div>
+                        <p class="text-xs text-slate-400 hidden sm:block">Verifiable • Ranked-Choice • Zero-Knowledge</p>
+                    </div>
+                </div>
+
+                <!-- Role Switcher & Controls -->
+                <div class="flex items-center space-x-3 sm:space-x-4">
+                    <!-- Role Switcher Segmented Control -->
+                    <div class="bg-slate-800/90 p-1 rounded-xl border border-slate-700/60 flex items-center shadow-inner text-xs sm:text-sm font-medium">
+                        <button onclick="switchRole('voter')" id="role-btn-voter" class="role-btn px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 bg-indigo-600 text-white shadow-md font-semibold">
+                            <span>🎓</span>
+                            <span class="hidden md:inline">Student Voter</span>
+                        </button>
+                        <button onclick="switchRole('candidate')" id="role-btn-candidate" class="role-btn px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 text-slate-300 hover:text-white hover:bg-slate-700/50">
+                            <span>🏆</span>
+                            <span class="hidden md:inline">Candidate Portal</span>
+                        </button>
+                        <button onclick="switchRole('admin')" id="role-btn-admin" class="role-btn px-3 py-1.5 rounded-lg transition-all flex items-center space-x-1.5 text-slate-300 hover:text-white hover:bg-slate-700/50">
+                            <span>🛡️</span>
+                            <span class="hidden md:inline">Election Commission</span>
+                        </button>
+                    </div>
+
+                    <!-- Theme Toggle -->
+                    <button onclick="toggleTheme()" id="theme-toggle-btn" class="p-2.5 rounded-xl bg-slate-800 border border-slate-700 hover:bg-slate-700 text-slate-300 hover:text-white transition-all shadow-sm" title="Toggle Light/Dark Theme">
+                        <span id="theme-icon">☀️</span>
+                    </button>
+
+                    <!-- Student Verification Badge -->
+                    <div class="hidden lg:flex items-center space-x-2 pl-2 border-l border-slate-700/80">
+                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center text-white font-bold text-xs shadow-sm">
+                            JS
+                        </div>
+                        <div class="text-left text-xs">
+                            <div class="font-bold text-slate-200">Jordan Smith</div>
+                            <div class="text-emerald-400 font-mono text-[11px] flex items-center">
+                                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 mr-1"></span> Verified • Senior (CS)
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Primary Navigation Tabs -->
+            <nav class="flex space-x-2 sm:space-x-3 overflow-x-auto py-3 no-scrollbar border-t border-slate-800/60 text-xs sm:text-sm font-semibold">
+                <button onclick="switchTab('ballots')" id="tab-btn-ballots" class="tab-btn active px-4 py-2.5 rounded-xl transition-all whitespace-nowrap flex items-center space-x-2 border border-slate-700/50">
+                    <span>🗳️</span>
+                    <span>Active Elections & Ballots</span>
+                </button>
+                <button onclick="switchTab('compare')" id="tab-btn-compare" class="tab-btn px-4 py-2.5 rounded-xl transition-all whitespace-nowrap flex items-center space-x-2 text-slate-300 hover:text-white hover:bg-slate-800/60 border border-slate-800">
+                    <span>📊</span>
+                    <span>Platform Comparison Matrix</span>
+                </button>
+                <button onclick="switchTab('townhall')" id="tab-btn-townhall" class="tab-btn px-4 py-2.5 rounded-xl transition-all whitespace-nowrap flex items-center space-x-2 text-slate-300 hover:text-white hover:bg-slate-800/60 border border-slate-800">
+                    <span>💬</span>
+                    <span>Townhall Q&A</span>
+                    <span class="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded-full text-[10px]" id="qa-badge-count">16</span>
+                </button>
+                <button onclick="switchTab('ledger')" id="tab-btn-ledger" class="tab-btn px-4 py-2.5 rounded-xl transition-all whitespace-nowrap flex items-center space-x-2 text-slate-300 hover:text-white hover:bg-slate-800/60 border border-slate-800">
+                    <span>🔐</span>
+                    <span>Public Audit & Verification</span>
+                </button>
+                <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="tab-btn px-4 py-2.5 rounded-xl transition-all whitespace-nowrap flex items-center space-x-2 text-slate-300 hover:text-white hover:bg-slate-800/60 border border-slate-800">
+                    <span>📈</span>
+                    <span>Live Turnout Analytics</span>
+                </button>
+                <button onclick="switchTab('rcv-simulator')" id="tab-btn-rcv-simulator" class="tab-btn px-4 py-2.5 rounded-xl transition-all whitespace-nowrap flex items-center space-x-2 text-slate-300 hover:text-white hover:bg-slate-800/60 border border-slate-800">
+                    <span>⚡</span>
+                    <span>RCV Instant-Runoff Simulator</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 min-h-[calc(100vh-220px)]">
+
+        <!-- ========================================================= -->
+        <!-- TAB 1: ACTIVE ELECTIONS & BALLOTS                         -->
+        <!-- ========================================================= -->
+        <section id="tab-ballots" class="tab-pane block space-y-8">
+            
+            <!-- Hero Header & Filter Bar -->
+            <div class="glass-card rounded-2xl p-6 sm:p-8 bg-gradient-to-br from-slate-900 via-slate-800/90 to-indigo-950/40 border border-slate-700/60 shadow-xl relative overflow-hidden">
+                <div class="absolute -right-20 -bottom-20 w-80 h-80 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 relative z-10">
+                    <div>
+                        <div class="inline-flex items-center space-x-2 bg-indigo-500/10 border border-indigo-500/20 px-3 py-1 rounded-full text-indigo-300 text-xs font-semibold mb-3">
+                            <span class="w-2 h-2 rounded-full bg-indigo-400 animate-ping"></span>
+                            <span>College Spring 2026 Elections</span>
+                        </div>
+                        <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Your Campus Ballots & Petitions</h1>
+                        <p class="text-slate-300 text-sm mt-1 max-w-2xl">
+                            Vote using modern <strong class="text-indigo-400">Ranked-Choice Voting (RCV)</strong> to prevent vote-splitting or standard single-choice plurality. When you cast your ballot, you receive a verifiable cryptographic token guaranteeing vote secrecy.
+                        </p>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-3">
+                        <div class="bg-slate-800/90 px-4 py-2.5 rounded-xl border border-slate-700 flex items-center space-x-3 text-xs">
+                            <div class="text-slate-400">Eligible For:</div>
+                            <div class="font-bold text-emerald-400 flex items-center">
+                                <span>3 Active Ballots</span>
+                            </div>
+                        </div>
+                        <button onclick="switchTab('ledger')" class="px-4 py-2.5 bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 rounded-xl text-xs font-bold transition flex items-center space-x-2">
+                            <span>🔍 Verify Receipt</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Filter & Search Bar -->
+                <div class="mt-6 pt-6 border-t border-slate-700/60 flex flex-col sm:flex-row gap-4 items-center justify-between text-xs sm:text-sm">
+                    <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                        <button onclick="filterElections('ALL', this)" class="filter-btn active bg-indigo-600 text-white px-3.5 py-1.5 rounded-lg font-bold transition">All Elections (3)</button>
+                        <button onclick="filterElections('SGA', this)" class="filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-1.5 rounded-lg font-medium transition">SGA Executive (1)</button>
+                        <button onclick="filterElections('SENATE', this)" class="filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-1.5 rounded-lg font-medium transition">Academic Senate (1)</button>
+                        <button onclick="filterElections('REFERENDUM', this)" class="filter-btn bg-slate-800 hover:bg-slate-700 text-slate-300 px-3.5 py-1.5 rounded-lg font-medium transition">Referendums (1)</button>
+                    </div>
+                    <div class="relative w-full sm:w-64">
+                        <input type="text" id="election-search" oninput="searchElections()" placeholder="Search candidates, positions..." class="w-full bg-slate-800/80 border border-slate-700 rounded-xl px-4 py-2 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Active Elections Container -->
+            <div id="elections-list-container" class="space-y-8">
+                <!-- Populated dynamically by JavaScript -->
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 2: PLATFORM MATRIX & CANDIDATE COMPARISON             -->
+        <!-- ========================================================= -->
+        <section id="tab-compare" class="tab-pane hidden space-y-8">
+            <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <h2 class="text-2xl font-extrabold tracking-tight text-white flex items-center space-x-2">
+                            <span>Side-by-Side Platform Matrix</span>
+                            <span class="text-xs bg-purple-500/20 text-purple-300 border border-purple-500/30 px-2.5 py-0.5 rounded-full font-bold">Policy Deep Dive</span>
+                        </h2>
+                        <p class="text-slate-300 text-sm mt-1">Select candidates from the Student Government Association (SGA) election to compare their stance across critical university matters.</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <label class="text-xs text-slate-400 font-medium">Select Election to Compare:</label>
+                        <select id="compare-election-select" onchange="renderComparisonMatrix()" class="bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs font-bold text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="SGA-2026">2026 Student Government Association (SGA) Executive</option>
+                            <option value="ENG-2026">School of Engineering Senate Representative</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Comparison Table -->
+                <div class="overflow-x-auto rounded-2xl border border-slate-700/80 bg-slate-900/60">
+                    <table class="w-full text-left border-collapse" id="comparison-table">
+                        <!-- Populated dynamically -->
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 3: TOWNHALL Q&A                                       -->
+        <!-- ========================================================= -->
+        <section id="tab-townhall" class="tab-pane hidden space-y-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Q&A Feed -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="glass-card rounded-2xl p-6 border border-slate-700/60 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div>
+                            <h2 class="text-xl font-bold text-white flex items-center space-x-2">
+                                <span>Campus Townhall Forum</span>
+                                <span class="bg-indigo-500/20 text-indigo-300 text-xs px-2.5 py-0.5 rounded-full border border-indigo-500/30 font-bold">Verified Student Q&A</span>
+                            </h2>
+                            <p class="text-xs text-slate-400 mt-1">Direct questions asked by students. Top upvoted questions require official candidate video or written responses before election day.</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <button onclick="sortQA('upvotes')" class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs font-bold shadow-sm">Top Upvoted</button>
+                            <button onclick="sortQA('recent')" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium">Most Recent</button>
+                        </div>
+                    </div>
+
+                    <!-- Questions List -->
+                    <div id="qa-list-container" class="space-y-4">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Ask Question Sidebar -->
+                <div class="space-y-6">
+                    <div class="glass-card rounded-2xl p-6 border border-slate-700/60 bg-gradient-to-br from-slate-900 to-indigo-950/30 sticky top-28">
+                        <h3 class="text-lg font-bold text-white mb-2 flex items-center space-x-2">
+                            <span>💡 Submit a Townhall Question</span>
+                        </h3>
+                        <p class="text-xs text-slate-300 mb-4">Your verified student ID checks enrollment, but your question can be posted anonymously if you prefer.</p>
+                        
+                        <form onsubmit="submitTownhallQuestion(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Direct To Which Election / Candidate?</label>
+                                <select id="qa-target-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="All SGA Candidates">All SGA Executive Candidates</option>
+                                    <option value="Alex Rivera & Maya Lin">Alex Rivera & Maya Lin (SGA)</option>
+                                    <option value="Jordan Vance & Chloe Bennett">Jordan Vance & Chloe Bennett (SGA)</option>
+                                    <option value="Engineering Candidates">School of Engineering Candidates</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Topic / Issue Category</label>
+                                <select id="qa-category-select" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                                    <option value="Dormitory & Dining">🍔 Dormitory & Dining Quality</option>
+                                    <option value="Academic & Finals Schedule">📚 Academic & Finals Policy</option>
+                                    <option value="Campus Safety & Transit">🚌 Campus Safety & Night Shuttle</option>
+                                    <option value="Club Budget & Tuition Transparency">💰 Tuition & Club Budget Allocation</option>
+                                    <option value="Sustainability & Green Campus">🌱 Sustainability Initiatives</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Your Question</label>
+                                <textarea id="qa-question-text" required rows="4" placeholder="E.g., What specific concrete action will you take during your first 30 days to improve the student mental health counseling wait times on campus?" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500"></textarea>
+                            </div>
+
+                            <div class="flex items-center space-x-2">
+                                <input type="checkbox" id="qa-anonymous" class="rounded bg-slate-800 border-slate-700 text-indigo-600 focus:ring-indigo-500">
+                                <label for="qa-anonymous" class="text-xs text-slate-300">Post question as <strong class="text-white">Anonymous Verified Student</strong></label>
+                            </div>
+
+                            <button type="submit" class="w-full py-2.5 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition text-xs flex items-center justify-center space-x-2">
+                                <span>Post Question to Townhall</span>
+                                <span>🚀</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 4: PUBLIC AUDIT LEDGER & VERIFICATION PORTAL          -->
+        <!-- ========================================================= -->
+        <section id="tab-ledger" class="tab-pane hidden space-y-8">
+            <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60 bg-gradient-to-br from-slate-900 via-slate-900 to-emerald-950/20">
+                <div class="max-w-3xl">
+                    <div class="inline-flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/20 px-3 py-1 rounded-full text-emerald-300 text-xs font-semibold mb-3">
+                        <span>🔐 End-to-End Cryptographic Verifiability</span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Public Audit Ledger & Ballot Verification</h2>
+                    <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+                        To guarantee both <strong class="text-white">100% voter privacy (secret ballot)</strong> and <strong class="text-white">absolute tally integrity</strong>, UniVote uses a Zero-Knowledge receipt architecture. When you submit your vote, your student identity is validated once and disconnected. Your choices are hashed with SHA-256 and assigned a unique receipt token. Enter your token below to verify your exact ballot on the immutable campus ledger.
+                    </p>
+                </div>
+
+                <!-- Search Token Bar -->
+                <div class="mt-8 p-6 rounded-2xl bg-slate-800/80 border border-slate-700/80 flex flex-col sm:flex-row gap-4 items-center">
+                    <div class="relative flex-1 w-full">
+                        <span class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none text-slate-400 font-mono font-bold">#</span>
+                        <input type="text" id="verify-token-input" placeholder="Enter your Ballot Receipt Token (e.g. UV-2026-SGA-9A8B7C or click any sample below)" class="w-full pl-8 pr-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-sm font-mono text-emerald-300 placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-emerald-500 font-semibold">
+                    </div>
+                    <button onclick="verifyBallotToken()" class="w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/30 transition flex items-center justify-center space-x-2 whitespace-nowrap">
+                        <span>Check Immutable Ledger</span>
+                        <span>🔍</span>
+                    </button>
+                </div>
+
+                <!-- Verification Result Alert Box -->
+                <div id="verify-result-box" class="mt-6 hidden p-6 rounded-2xl border transition-all"></div>
+
+                <!-- Public Audit Ledger Table -->
+                <div class="mt-10">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center space-x-2">
+                            <span>Live Campus Immutable Ledger</span>
+                            <span class="text-xs font-normal text-slate-400">(Latest 25 anonymized ballot receipts)</span>
+                        </h3>
+                        <button onclick="seedSampleReceipts()" class="text-xs text-indigo-400 hover:text-indigo-300 underline font-medium">Reset Ledger Data</button>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-700/80 bg-slate-900/50">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-800 bg-slate-800/80 text-slate-300 uppercase tracking-wider font-bold">
+                                    <th class="py-3 px-4">Receipt Token (Hash)</th>
+                                    <th class="py-3 px-4">Election Category</th>
+                                    <th class="py-3 px-4">Encrypted / Recorded Ballot Summary</th>
+                                    <th class="py-3 px-4">Timestamp (UTC)</th>
+                                    <th class="py-3 px-4 text-right">Ledger Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="ledger-table-body" class="divide-y divide-slate-800/80 font-mono">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 5: LIVE TURNOUT & ANALYTICS DASHBOARD                 -->
+        <!-- ========================================================= -->
+        <section id="tab-dashboard" class="tab-pane hidden space-y-8">
+            <!-- Key Stats Cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                <div class="glass-card p-6 rounded-2xl border border-slate-700/60 flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Total Ballots Cast</div>
+                        <div class="text-3xl font-extrabold text-white mt-1" id="stat-total-ballots">3,420</div>
+                        <div class="text-xs text-emerald-400 font-semibold mt-1 flex items-center">
+                            <span>↑ +184 in last hour</span>
+                        </div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-indigo-500/15 border border-indigo-500/30 flex items-center justify-center text-indigo-400 text-xl">
+                        🗳️
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl border border-slate-700/60 flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Campus Participation</div>
+                        <div class="text-3xl font-extrabold text-amber-300 mt-1" id="stat-turnout-rate">68.4%</div>
+                        <div class="text-xs text-slate-400 font-medium mt-1">Target: 65.0% reached!</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 text-xl">
+                        🔥
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl border border-slate-700/60 flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Eligible Campus Pool</div>
+                        <div class="text-3xl font-extrabold text-white mt-1">5,000</div>
+                        <div class="text-xs text-indigo-300 font-medium mt-1">Enrolled Undergrad / Grad</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-purple-500/15 border border-purple-500/30 flex items-center justify-center text-purple-400 text-xl">
+                        🎓
+                    </div>
+                </div>
+
+                <div class="glass-card p-6 rounded-2xl border border-slate-700/60 flex items-center justify-between">
+                    <div>
+                        <div class="text-xs font-bold uppercase tracking-wider text-slate-400">Audit Verification</div>
+                        <div class="text-3xl font-extrabold text-emerald-400 mt-1">100%</div>
+                        <div class="text-xs text-slate-400 font-medium mt-1">Zero cryptographic anomalies</div>
+                    </div>
+                    <div class="w-12 h-12 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-400 text-xl">
+                        🛡️
+                    </div>
+                </div>
+            </div>
+
+            <!-- Turnout Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <!-- Turnout by Academic Year -->
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/60">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Voter Turnout by Academic Class</h3>
+                            <p class="text-xs text-slate-400">Percentage of eligible cohort that has cast ballots</p>
+                        </div>
+                        <span class="bg-indigo-500/15 text-indigo-300 px-2.5 py-1 rounded-lg text-xs font-bold border border-indigo-500/30">Live Sync</span>
+                    </div>
+                    <div class="h-64 sm:h-72">
+                        <canvas id="chart-class-turnout"></canvas>
+                    </div>
+                </div>
+
+                <!-- Turnout by Department / School -->
+                <div class="glass-card rounded-2xl p-6 border border-slate-700/60">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <h3 class="text-lg font-bold text-white">Ballot Share by Academic School</h3>
+                            <p class="text-xs text-slate-400">Distribution across major college faculties</p>
+                        </div>
+                        <span class="bg-purple-500/15 text-purple-300 px-2.5 py-1 rounded-lg text-xs font-bold border border-purple-500/30">Real-time</span>
+                    </div>
+                    <div class="h-64 sm:h-72 flex items-center justify-center">
+                        <canvas id="chart-department-share"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Hourly Turnout Velocity Chart -->
+            <div class="glass-card rounded-2xl p-6 border border-slate-700/60">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-lg font-bold text-white">Hourly Voting Velocity (Last 12 Hours)</h3>
+                        <p class="text-xs text-slate-400">Peak voting hours occur between class shifts (12 PM & 4 PM)</p>
+                    </div>
+                    <button onclick="refreshCharts()" class="text-xs px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg font-bold transition">🔄 Refresh Analytics</button>
+                </div>
+                <div class="h-64 sm:h-80">
+                    <canvas id="chart-hourly-velocity"></canvas>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- TAB 6: RCV INSTANT-RUNOFF SIMULATOR                       -->
+        <!-- ========================================================= -->
+        <section id="tab-rcv-simulator" class="tab-pane hidden space-y-8">
+            <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60 bg-gradient-to-br from-slate-900 via-slate-900 to-purple-950/30">
+                <div class="max-w-3xl">
+                    <div class="inline-flex items-center space-x-2 bg-purple-500/10 border border-purple-500/20 px-3 py-1 rounded-full text-purple-300 text-xs font-semibold mb-3">
+                        <span>⚡ Instant-Runoff Voting (IRV) Mathematical Engine</span>
+                    </div>
+                    <h2 class="text-2xl sm:text-3xl font-extrabold tracking-tight text-white">Ranked-Choice Elimination Simulator</h2>
+                    <p class="text-slate-300 text-sm mt-2 leading-relaxed">
+                        Why does our college use <strong class="text-white">Ranked-Choice Voting</strong>? In traditional elections with 4 candidates, someone can win with only <strong class="text-amber-400">26%</strong> of the vote despite 74% of the campus preferring someone else! With Ranked-Choice, if no candidate achieves <strong class="text-emerald-400">&gt;50% majority</strong> in Round 1, the candidate with the fewest votes is eliminated and their voters' 2nd choices are transferred automatically until a true majority winner emerges.
+                    </p>
+                </div>
+
+                <!-- Interactive Controls -->
+                <div class="mt-8 p-6 rounded-2xl bg-slate-800/80 border border-slate-700 flex flex-wrap items-center justify-between gap-4">
+                    <div class="flex items-center space-x-3">
+                        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider">Simulation Stage:</span>
+                        <span id="rcv-stage-badge" class="px-3 py-1 rounded-full bg-indigo-600 text-white text-xs font-bold">Round 1 (Initial First-Choice Tally)</span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <button onclick="runRcvRound(1)" id="rcv-btn-1" class="px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow transition">Round 1: Initial Count</button>
+                        <button onclick="runRcvRound(2)" id="rcv-btn-2" class="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold shadow transition">Round 2: Eliminate Elena Rostova (8%)</button>
+                        <button onclick="runRcvRound(3)" id="rcv-btn-3" class="px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold shadow transition">Round 3: Eliminate Marcus Thorne (18%) -> Winner!</button>
+                        <button onclick="resetRcvSimulator()" class="px-3.5 py-2 bg-rose-600/20 hover:bg-rose-600/30 text-rose-300 border border-rose-500/30 rounded-xl text-xs font-bold transition">Reset Simulation</button>
+                    </div>
+                </div>
+
+                <!-- Simulation Visualizer Table & Bar Chart -->
+                <div class="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-8 items-start">
+                    <!-- Dynamic Round Explanation -->
+                    <div class="lg:col-span-1 glass-card p-6 rounded-2xl border border-slate-700 space-y-4">
+                        <h3 class="text-base font-bold text-white flex items-center space-x-2">
+                            <span>ℹ️ What Happened In This Round?</span>
+                        </h3>
+                        <div id="rcv-round-description" class="text-xs text-slate-300 leading-relaxed space-y-3">
+                            <p><strong class="text-white">Round 1 Status:</strong> All first-choice votes have been tallied across the 3,420 cast ballots for SGA Executive.</p>
+                            <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                                <li><strong>Alex Rivera & Maya Lin:</strong> 1,368 votes (40.0%)</li>
+                                <li><strong>Jordan Vance & Chloe Bennett:</strong> 1,163 votes (34.0%)</li>
+                                <li><strong>Marcus Thorne & Liam O'Connor:</strong> 615 votes (18.0%)</li>
+                                <li><strong>Elena Rostova & David Kim:</strong> 274 votes (8.0%)</li>
+                            </ul>
+                            <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 font-semibold mt-2">
+                                ⚠️ No candidate reached the 50% majority threshold (1,711 votes required). Proceeding to Round 2 elimination!
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Live Bar Visualizer -->
+                    <div class="lg:col-span-2 glass-card p-6 rounded-2xl border border-slate-700 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-base font-bold text-white">Live Runoff Tally Breakdown</h3>
+                            <span class="text-xs text-slate-400">Total Valid Ballots: <strong class="text-white">3,420</strong> (Threshold: <strong class="text-emerald-400">1,711</strong> for Majority)</span>
+                        </div>
+
+                        <!-- Candidate Bars -->
+                        <div id="rcv-bars-container" class="space-y-5">
+                            <!-- Populated dynamically by JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- CANDIDATE PORTAL VIEW (Hidden by default)                 -->
+        <!-- ========================================================= -->
+        <section id="portal-candidate" class="portal-pane hidden space-y-8">
+            <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60 bg-gradient-to-br from-slate-900 to-indigo-950/40">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <div class="inline-flex items-center space-x-2 bg-indigo-500/20 px-3 py-1 rounded-full text-indigo-300 text-xs font-bold mb-2 border border-indigo-500/30">
+                            <span>🏆 Candidate Campaign Dashboard</span>
+                        </div>
+                        <h1 class="text-2xl font-extrabold text-white">Manage Your SGA Executive Ticket</h1>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1">Logged in as: <strong class="text-white">Alex Rivera & Maya Lin</strong> (SGA Executive Candidates)</p>
+                    </div>
+                    <button onclick="switchRole('voter')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition self-start sm:self-center">← Return to Voter Mode</button>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                    <div class="p-4 rounded-xl bg-slate-800/80 border border-slate-700">
+                        <div class="text-xs font-bold text-slate-400 uppercase">Profile Impressions</div>
+                        <div class="text-2xl font-extrabold text-white mt-1">1,842</div>
+                        <div class="text-xs text-emerald-400 font-medium mt-0.5">↑ +24% today</div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-800/80 border border-slate-700">
+                        <div class="text-xs font-bold text-slate-400 uppercase">Townhall Questions Answered</div>
+                        <div class="text-2xl font-extrabold text-indigo-400 mt-1" id="cand-qa-stat">14 / 16</div>
+                        <div class="text-xs text-slate-400 font-medium mt-0.5">2 pending your response</div>
+                    </div>
+                    <div class="p-4 rounded-xl bg-slate-800/80 border border-slate-700">
+                        <div class="text-xs font-bold text-slate-400 uppercase">Student Sentiment Score</div>
+                        <div class="text-2xl font-extrabold text-emerald-400 mt-1">94%</div>
+                        <div class="text-xs text-slate-400 font-medium mt-0.5">Based on platform likes</div>
+                    </div>
+                </div>
+
+                <!-- Edit Platform Form -->
+                <div class="glass-card p-6 rounded-2xl border border-slate-700/80 space-y-6">
+                    <h3 class="text-lg font-bold text-white border-b border-slate-800 pb-3">Edit Your Official Campaign Platform & Manifesto</h3>
+                    <form onsubmit="saveCandidateProfile(event)" class="space-y-5 text-xs sm:text-sm">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Official Campaign Slogan</label>
+                                <input type="text" id="cand-edit-slogan" value="Action Over Promises — 24/7 Library, Lower Dining Fees, Mental Health First" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Video Pitch URL / Website Link</label>
+                                <input type="text" id="cand-edit-video" value="https://youtube.com/watch?v=campaign-pitch-2026" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-indigo-300 font-mono text-xs focus:ring-2 focus:ring-indigo-500">
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-indigo-300 mb-1.5">📚 Academic Reform Commitment</label>
+                                <textarea rows="3" id="cand-edit-academic" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-indigo-500">24/7 Library access during finals week, syllabus transparency guaranteed before drop deadlines, and $500 max cap on required physical textbook costs.</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-emerald-300 mb-1.5">🌱 Sustainability & Campus Green Budget</label>
+                                <textarea rows="3" id="cand-edit-green" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-indigo-500">100% solar array installation on West Garage roof by Spring 2027, free reusable dining hall containers, and expanding EV shuttle buses.</textarea>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-amber-300 mb-1.5">🍔 Housing, Dining & Club Budget</label>
+                                <textarea rows="3" id="cand-edit-housing" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-indigo-500">Free weekend grocery shuttles for off-campus students, $20,000 emergency student micro-grant fund, and 20% boost to club event budgets.</textarea>
+                            </div>
+                        </div>
+
+                        <div class="flex justify-end pt-3">
+                            <button type="submit" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
+                                <span>Save Changes & Publish Live to Campus</span>
+                                <span>✨</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </section>
+
+        <!-- ========================================================= -->
+        <!-- ELECTION COMMISSION (ADMIN) PORTAL VIEW                   -->
+        <!-- ========================================================= -->
+        <section id="portal-admin" class="portal-pane hidden space-y-8">
+            <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60 bg-gradient-to-br from-slate-900 to-purple-950/40">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                    <div>
+                        <div class="inline-flex items-center space-x-2 bg-purple-500/20 px-3 py-1 rounded-full text-purple-300 text-xs font-bold mb-2 border border-purple-500/30">
+                            <span>🛡️ Election Commission / Admin Console</span>
+                        </div>
+                        <h1 class="text-2xl font-extrabold text-white">Create & Configure Campus Ballots</h1>
+                        <p class="text-xs sm:text-sm text-slate-300 mt-1">Manage active voting strategies, department rules, and public audit exports.</p>
+                    </div>
+                    <button onclick="switchRole('voter')" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition self-start sm:self-center">← Return to Voter Mode</button>
+                </div>
+
+                <!-- Create Election Wizard Form -->
+                <div class="glass-card p-6 rounded-2xl border border-slate-700/80 space-y-6">
+                    <h3 class="text-lg font-bold text-white border-b border-slate-800 pb-3 flex items-center justify-between">
+                        <span>⚡ Launch New Campus Election or Referendum</span>
+                        <span class="text-xs text-indigo-400 font-normal">Instant Live Deployment</span>
+                    </h3>
+
+                    <form onsubmit="createNewElection(event)" class="space-y-5 text-xs sm:text-sm">
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Election / Position Title</label>
+                                <input type="text" id="admin-new-title" required placeholder="E.g., Senior Class President 2026-2027" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Category</label>
+                                <select id="admin-new-category" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                                    <option value="SGA">SGA Executive / Student Government</option>
+                                    <option value="SENATE">Academic School Senate</option>
+                                    <option value="DORM">Dormitory / Housing Council</option>
+                                    <option value="REFERENDUM">Campus-Wide Referendum / Proposition</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Voting Strategy</label>
+                                <select id="admin-new-strategy" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                                    <option value="RCV">Ranked-Choice Voting (Instant Runoff)</option>
+                                    <option value="PLURALITY">Plurality (Single-Choice Radio)</option>
+                                    <option value="REFERENDUM">Yes / No / Abstain Proposition</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Voter Eligibility Rule</label>
+                                <select id="admin-new-eligibility" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                                    <option value="All Enrolled Students (Freshman - Graduate)">All Enrolled Students (Freshman - Graduate)</option>
+                                    <option value="Senior Cohort Only (Class of 2026)">Senior Cohort Only (Class of 2026)</option>
+                                    <option value="Engineering & Computer Science Majors Only">Engineering & Computer Science Majors Only</option>
+                                    <option value="On-Campus Dorm Residents Only">On-Campus Dorm Residents Only</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-bold text-slate-300 mb-1.5">Candidates (Comma-separated or Proposition Text)</label>
+                                <input type="text" id="admin-new-candidates" required placeholder="E.g., Taylor Swift & Travis Kelce, Sam Altman & Jensen Huang, Ada Lovelace & Alan Turing" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                            </div>
+                        </div>
+
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-800">
+                            <div class="text-xs text-slate-400">
+                                When launched, this ballot will immediately appear under the <strong class="text-white">Active Elections & Ballots</strong> tab with live cryptographic verification.
+                            </div>
+                            <button type="submit" class="px-6 py-3 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-500 hover:to-pink-500 text-white font-bold rounded-xl shadow-lg shadow-purple-600/30 transition flex items-center space-x-2">
+                                <span>🚀 Launch Live Election Now</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Admin Management Table -->
+                <div class="glass-card p-6 rounded-2xl border border-slate-700/80 space-y-4">
+                    <div class="flex items-center justify-between">
+                        <h3 class="text-lg font-bold text-white">Live Election Governance & Audit Export</h3>
+                        <button onclick="exportAuditLedgerCsv()" class="px-3.5 py-1.5 bg-emerald-600/20 hover:bg-emerald-600/30 text-emerald-300 border border-emerald-500/30 rounded-xl text-xs font-bold transition flex items-center space-x-1.5">
+                            <span>📥 Export Anonymized Audit CSV</span>
+                        </button>
+                    </div>
+
+                    <div class="overflow-x-auto rounded-xl border border-slate-700/80 bg-slate-900/50">
+                        <table class="w-full text-left border-collapse text-xs">
+                            <thead>
+                                <tr class="border-b border-slate-800 bg-slate-800/80 text-slate-300 uppercase font-bold">
+                                    <th class="py-3 px-4">Election ID & Title</th>
+                                    <th class="py-3 px-4">Strategy</th>
+                                    <th class="py-3 px-4">Eligibility</th>
+                                    <th class="py-3 px-4">Turnout Count</th>
+                                    <th class="py-3 px-4">Status</th>
+                                    <th class="py-3 px-4 text-right">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="admin-elections-table" class="divide-y divide-slate-800/80 font-medium">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Vote Confirmation & Receipt Modal -->
+    <div id="vote-modal" class="fixed inset-0 z-50 hidden flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm transition-opacity">
+        <div class="glass-card max-w-lg w-full rounded-2xl p-6 sm:p-8 border border-slate-700 shadow-2xl relative animate-in fade-in zoom-in duration-200">
+            <div class="text-center space-y-4">
+                <div class="w-16 h-16 bg-emerald-500/20 border border-emerald-500/40 text-emerald-400 rounded-2xl flex items-center justify-center mx-auto text-3xl shadow-glow">
+                    ✅
+                </div>
+                <h3 class="text-2xl font-extrabold text-white">Ballot Cryptographically Sealed!</h3>
+                <p class="text-xs sm:text-sm text-slate-300">
+                    Your choice has been recorded on the campus zero-knowledge audit ledger. Your student eligibility token was verified and detached to ensure absolute secret-ballot privacy.
+                </p>
+
+                <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-left space-y-2">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>Election:</span>
+                        <span class="font-bold text-white" id="modal-election-title">SGA Executive 2026</span>
+                    </div>
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span>Recorded Choice Summary:</span>
+                        <span class="font-bold text-indigo-300 text-right" id="modal-choice-summary">1st: Alex Rivera & Maya Lin</span>
+                    </div>
+                    <div class="pt-2 border-t border-slate-800/80">
+                        <div class="text-[11px] uppercase font-bold text-emerald-400 mb-1">Your Unique Receipt Token (Save To Verify):</div>
+                        <div class="flex items-center justify-between bg-slate-950 px-3 py-2 rounded-lg border border-slate-800 font-mono text-xs text-amber-300 font-bold select-all">
+                            <span id="modal-receipt-token">#UV-2026-SGA-9A8B7C</span>
+                            <button onclick="copyModalToken()" class="text-xs text-slate-400 hover:text-white ml-2 px-2 py-0.5 bg-slate-800 rounded font-sans font-medium" id="copy-btn-text">Copy</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col sm:flex-row gap-3 pt-2">
+                    <button onclick="closeVoteModalAndGoToLedger()" class="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-emerald-600/30">
+                        Check Token on Public Ledger 🔍
+                    </button>
+                    <button onclick="closeVoteModal()" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-xl text-xs font-bold transition">
+                        Return to Ballots
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-slate-800/80 bg-slate-900/40 py-8 text-xs text-slate-400 mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <div class="flex items-center space-x-2">
+                <span class="font-extrabold text-white">UniVote AI</span>
+                <span>•</span>
+                <span>Campus Election & Civic Platform • Built for College Transparency</span>
+            </div>
+            <div class="flex items-center space-x-4">
+                <span>🔐 SHA-256 Verifiable Receipts</span>
+                <span>•</span>
+                <span>⚡ Instant-Runoff Ready</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        /************************************************************************
+         * STATE MANAGEMENT & PRELOADED REALISTIC DATA
+         ************************************************************************/
+        let currentRole = 'voter'; // 'voter', 'candidate', 'admin'
+        let currentTab = 'ballots';
+        let isDarkMode = true;
+
+        // Preloaded Elections Data
+        let electionsData = [
+            {
+                id: 'SGA-2026',
+                title: '2026-2027 Student Government Association (SGA) Executive Election',
+                category: 'SGA',
+                votingStrategy: 'RCV', // RCV, PLURALITY, REFERENDUM
+                eligibility: 'All Enrolled Students (Freshman - Graduate)',
+                status: 'Live',
+                closesIn: '18 hours, 24 mins',
+                totalVotes: 3420,
+                hasVoted: false,
+                candidates: [
+                    {
+                        id: 'cand-sga-1',
+                        name: 'Alex Rivera & Maya Lin',
+                        slogan: 'Action Over Promises — 24/7 Library, Lower Dining Fees, Mental Health First',
+                        bio: 'Alex is a Junior in Political Science and Maya is a Junior in Data Science. We have already negotiated with the Provost to secure $100k for overnight library staff during midterms and finals.',
+                        academic: '24/7 Library access during finals week, syllabus transparency guaranteed before drop deadlines, and $500 max cap on required physical textbook costs.',
+                        sustainability: '100% solar array installation on West Garage roof by Spring 2027, free reusable dining hall containers, and expanding EV shuttle buses.',
+                        housing: 'Free weekend grocery shuttles for off-campus students, $20,000 emergency student micro-grant fund, and 20% boost to club event budgets.',
+                        votes: 1368
+                    },
+                    {
+                        id: 'cand-sga-2',
+                        name: 'Jordan Vance & Chloe Bennett',
+                        slogan: 'Innovate Our Campus — Green Energy, AI Study Hubs, Fair Student Parking',
+                        bio: 'Jordan is a Senior in Electrical Engineering and Chloe is a Junior in Economics. Our focus is bringing cutting-edge AI tutors, guaranteed sophomore campus parking passes, and solar dorms.',
+                        academic: 'Free enterprise ChatGPT / Claude access for every undergrad, creating 12 new group collaborative tech rooms in the student union.',
+                        sustainability: 'Eliminating all single-use plastics from campus cafes within 6 months, installing 40 new high-speed EV chargers in campus lots.',
+                        housing: 'Revamping campus dining hall dinner hours until 11 PM and ending mandatory commuter meal plan requirements.',
+                        votes: 1163
+                    },
+                    {
+                        id: 'cand-sga-3',
+                        name: 'Marcus Thorne & Liam O\'Connor',
+                        slogan: 'Student Voice & Transparency — Budget Accountability, Club Expansion, Campus Shuttle',
+                        bio: 'Marcus and Liam are both Sophomores in Business Administration. We want to publish every single dollar spent by the administration and double annual funding for student-run clubs.',
+                        academic: 'Standardizing pass/fail conversion windows to 8 weeks and expanding undergraduate research grant stipends to $3,000.',
+                        sustainability: 'Campus community gardens where students can grow organic produce for the food pantry.',
+                        housing: '24/7 campus safety shuttle routes connecting off-campus student apartments directly to the engineering and arts quads.',
+                        votes: 615
+                    },
+                    {
+                        id: 'cand-sga-4',
+                        name: 'Elena Rostova & David Kim',
+                        slogan: 'Equitable Campus for All — Diversity & Inclusion, Emergency Grant Fund, Free Transit Pass',
+                        bio: 'Elena is a Senior in Sociology and David is a Junior in Public Health. Our campaign ensures every student regardless of financial background has equal access to wellness, transit, and textbooks.',
+                        academic: 'Free digital textbook portal for all 100-level and 200-level core university classes.',
+                        sustainability: 'Partnering with city transit to provide 100% free unlimited city bus and subway passes with student ID.',
+                        housing: 'Subsidized on-campus emergency housing for students facing unexpected financial or family distress.',
+                        votes: 274
+                    }
+                ]
+            },
+            {
+                id: 'ENG-2026',
+                title: 'School of Engineering & Computer Science Senate Representative',
+                category: 'SENATE',
+                votingStrategy: 'PLURALITY',
+                eligibility: 'Engineering & Computer Science Majors Only',
+                status: 'Live',
+                closesIn: '18 hours, 24 mins',
+                totalVotes: 1184,
+                hasVoted: false,
+                candidates: [
+                    {
+                        id: 'cand-eng-1',
+                        name: 'Priya Sharma',
+                        slogan: 'Open Source Campus, High-Performance GPU Lab Access, 24/7 Hacker Space',
+                        bio: 'Computer Science Junior & President of the ACM Student Chapter.',
+                        academic: 'Dedicated NVIDIA H100 cluster allocations for undergraduate capstone and AI projects without requiring grad advisor sign-off.',
+                        sustainability: 'Energy-efficient server scheduling for computer labs.',
+                        housing: 'More vending options and coffee stations in the Engineering building.',
+                        votes: 542
+                    },
+                    {
+                        id: 'cand-eng-2',
+                        name: 'Devon Carter',
+                        slogan: 'More Industry Co-ops, Annual Hackathon Funding, Modernizing CS Curriculum',
+                        bio: 'Mechanical Engineering Senior with internships at Tesla and Lockheed.',
+                        academic: 'Expanding industry co-op networking fairs and updating senior design budgets.',
+                        sustainability: 'Recycling electronic waste directly through department collection bins.',
+                        housing: 'Better lockers and storage for heavy engineering equipment.',
+                        votes: 412
+                    },
+                    {
+                        id: 'cand-eng-3',
+                        name: 'Zackary Nguyen',
+                        slogan: 'Robotics Club Expansion, Better Lab Equipment, Study Group Network',
+                        bio: 'Electrical Engineering Sophomore & Robotics Team Lead.',
+                        academic: 'Replacing outdated oscilloscopes and soldering stations in 3rd-floor labs.',
+                        sustainability: 'Solar-powered charging benches around the Engineering quad.',
+                        housing: 'Adding soundproof quiet booths in the engineering library.',
+                        votes: 230
+                    }
+                ]
+            },
+            {
+                id: 'REF-104',
+                title: 'Campus-Wide Referendum: Proposition 104 — Late-Night Campus Safety & Shuttle Expansion',
+                category: 'REFERENDUM',
+                votingStrategy: 'REFERENDUM',
+                eligibility: 'All Enrolled Students (Freshman - Graduate)',
+                status: 'Live',
+                closesIn: '18 hours, 24 mins',
+                totalVotes: 4120,
+                hasVoted: false,
+                propositionText: 'Shall the Student Union allocate $45,000 from the annual surplus reserve to expand the campus night shuttle routes (running every 15 minutes from 10 PM to 4 AM) and install emergency blue-light safety stations near the West Campus Dormitories and Engineering Quad?',
+                candidates: [
+                    { id: 'prop-yes', name: '👍 YES - Approve Safety & Shuttle Expansion', slogan: 'Allocates $45k surplus to 15-minute night shuttles and blue-light stations.' },
+                    { id: 'prop-no', name: '👎 NO - Reject Proposition (Keep Funds in Reserve)', slogan: 'Maintains current shuttle schedule and preserves emergency surplus fund.' },
+                    { id: 'prop-abstain', name: '✋ ABSTAIN - Record Attendance Without Stance', slogan: 'Counts toward overall campus voter quorum without voting Yes or No.' }
+                ]
+            }
+        ];
+
+        // RCV Ranking Selection state per election ID -> candidateId array
+        let rcvSelections = {};
+
+        // Townhall Q&A Data
+        let townhallQuestions = [
+            {
+                id: 'qa-1',
+                target: 'Alex Rivera & Maya Lin',
+                category: 'Dormitory & Dining',
+                question: 'The lines at West Campus Dining Hall take over 40 minutes between 12 PM and 1 PM every day. How exactly do you plan to fix this dining bottleneck?',
+                author: 'Jordan Smith (Verified Senior)',
+                timestamp: '2 hours ago',
+                upvotes: 42,
+                hasUpvoted: false,
+                answer: 'We have already met with Campus Dining Services. Our proposal adds two new mobile pickup kiosks for grab-and-go sandwich/bowl orders during peak hours, and expands the dining app preorder window by 30 minutes. This will cut line times in half!'
+            },
+            {
+                id: 'qa-2',
+                target: 'All SGA Candidates',
+                category: 'Academic & Finals Schedule',
+                question: 'Will you guarantee that the Main Library and Engineering Study Halls stay open 24 hours a day during all 10 days of the Spring Finals period?',
+                author: 'Anonymous Verified Student',
+                timestamp: '4 hours ago',
+                upvotes: 38,
+                hasUpvoted: false,
+                answer: 'Yes! All four SGA tickets have endorsed our joint petition guaranteeing 24/7 library access with university security and free midnight coffee stations during midterms and finals.'
+            },
+            {
+                id: 'qa-3',
+                target: 'Jordan Vance & Chloe Bennett',
+                category: 'Sustainability & Green Campus',
+                question: 'Your platform mentions installing 40 new EV chargers. Where will the funding come from without raising student parking permit fees?',
+                author: 'Liam K. (Junior, Economics)',
+                timestamp: '6 hours ago',
+                upvotes: 29,
+                hasUpvoted: false,
+                answer: 'Great question! The funding will be 80% covered by federal/state clean transit infrastructure grants that the university has already pre-qualified for, with the remaining 20% matched by campus sustainability grant endowments. Student parking permit fees will not increase by a single cent!'
+            },
+            {
+                id: 'qa-4',
+                target: 'Engineering Candidates',
+                category: 'Club Budget & Tuition Transparency',
+                question: 'Can we get swipe card 24/7 access to the soldering and 3D printing labs for senior design teams?',
+                author: 'Sarah M. (Senior, EE)',
+                timestamp: '8 hours ago',
+                upvotes: 24,
+                hasUpvoted: false,
+                answer: null // Pending answer
+            }
+        ];
+
+        // Audit Ledger Sample Data
+        let auditLedger = [
+            { token: '#UV-2026-SGA-8F92A1', category: 'SGA Executive', summary: '1st: Alex Rivera & Maya Lin, 2nd: Jordan Vance...', timestamp: '2026-07-17 16:32:14 UTC', status: '✅ Validated & Sealed' },
+            { token: '#UV-2026-ENG-3D71C2', category: 'Engineering Senate', summary: 'Choice: Priya Sharma (ACM Pres)', timestamp: '2026-07-17 16:29:45 UTC', status: '✅ Validated & Sealed' },
+            { token: '#UV-2026-REF-8F21A9', category: 'Referendum 104', summary: 'Choice: 👍 YES - Approve Safety & Shuttle Expansion', timestamp: '2026-07-17 16:25:10 UTC', status: '✅ Validated & Sealed' },
+            { token: '#UV-2026-SGA-4A19B8', category: 'SGA Executive', summary: '1st: Jordan Vance & Chloe Bennett, 2nd: Alex Rivera...', timestamp: '2026-07-17 16:18:03 UTC', status: '✅ Validated & Sealed' },
+            { token: '#UV-2026-SGA-7C91D3', category: 'SGA Executive', summary: '1st: Marcus Thorne & Liam O\'Connor, 2nd: Elena Rostova...', timestamp: '2026-07-17 16:12:49 UTC', status: '✅ Validated & Sealed' },
+            { token: '#UV-2026-ENG-9B42E1', category: 'Engineering Senate', summary: 'Choice: Devon Carter (MechE)', timestamp: '2026-07-17 16:05:22 UTC', status: '✅ Validated & Sealed' },
+            { token: '#UV-2026-REF-2F81A4', category: 'Referendum 104', summary: 'Choice: 👍 YES - Approve Safety & Shuttle Expansion', timestamp: '2026-07-17 15:58:31 UTC', status: '✅ Validated & Sealed' }
+        ];
+
+        /************************************************************************
+         * INITIALIZATION ON PAGE LOAD
+         ************************************************************************/
+        window.addEventListener('DOMContentLoaded', () => {
+            renderActiveElections();
+            renderComparisonMatrix();
+            renderTownhallQA();
+            renderAuditLedger();
+            renderAdminElectionsTable();
+            initCharts();
+            renderRcvSimulatorBars(1);
+        });
+
+        /************************************************************************
+         * ROLE & TAB SWITCHING LOGIC
+         ************************************************************************/
+        function switchRole(role) {
+            currentRole = role;
+            
+            // Update role buttons
+            document.querySelectorAll('.role-btn').forEach(btn => {
+                btn.classList.remove('bg-indigo-600', 'text-white', 'shadow-md', 'font-semibold');
+                btn.classList.add('text-slate-300');
+            });
+            const activeBtn = document.getElementById(`role-btn-${role}`);
+            if (activeBtn) {
+                activeBtn.classList.remove('text-slate-300');
+                activeBtn.classList.add('bg-indigo-600', 'text-white', 'shadow-md', 'font-semibold');
+            }
+
+            // Show/Hide top nav tabs vs portal panes
+            const navBar = document.querySelector('nav');
+            if (role === 'voter') {
+                navBar.style.display = 'flex';
+                document.querySelectorAll('.portal-pane').forEach(p => p.classList.add('hidden'));
+                switchTab(currentTab);
+            } else if (role === 'candidate') {
+                navBar.style.display = 'none';
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+                document.querySelectorAll('.portal-pane').forEach(p => p.classList.add('hidden'));
+                document.getElementById('portal-candidate').classList.remove('hidden');
+            } else if (role === 'admin') {
+                navBar.style.display = 'none';
+                document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+                document.querySelectorAll('.portal-pane').forEach(p => p.classList.add('hidden'));
+                document.getElementById('portal-admin').classList.remove('hidden');
+                renderAdminElectionsTable();
+            }
+        }
+
+        function switchTab(tabId) {
+            currentTab = tabId;
+            if (currentRole !== 'voter') switchRole('voter');
+
+            // Update Tab buttons
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('active');
+                btn.classList.add('text-slate-300');
+            });
+            const activeTabBtn = document.getElementById(`tab-btn-${tabId}`);
+            if (activeTabBtn) {
+                activeTabBtn.classList.add('active');
+                activeTabBtn.classList.remove('text-slate-300');
+            }
+
+            // Hide all tab panes & show selected
+            document.querySelectorAll('.tab-pane').forEach(p => p.classList.add('hidden'));
+            const pane = document.getElementById(`tab-${tabId}`);
+            if (pane) pane.classList.remove('hidden');
+
+            if (tabId === 'dashboard') {
+                setTimeout(initCharts, 100);
+            }
+        }
+
+        function toggleTheme() {
+            isDarkMode = !isDarkMode;
+            const html = document.documentElement;
+            const icon = document.getElementById('theme-icon');
+            if (isDarkMode) {
+                html.classList.add('dark');
+                icon.innerText = '☀️';
+            } else {
+                html.classList.remove('dark');
+                icon.innerText = '🌙';
+            }
+        }
+
+        /************************************************************************
+         * RENDER ACTIVE ELECTIONS & BALLOTS
+         ************************************************************************/
+        let activeFilterCategory = 'ALL';
+
+        function filterElections(category, btnElem) {
+            activeFilterCategory = category;
+            if (btnElem) {
+                document.querySelectorAll('.filter-btn').forEach(b => {
+                    b.classList.remove('active', 'bg-indigo-600', 'text-white', 'font-bold');
+                    b.classList.add('bg-slate-800', 'text-slate-300', 'font-medium');
+                });
+                btnElem.classList.add('active', 'bg-indigo-600', 'text-white', 'font-bold');
+                btnElem.classList.remove('bg-slate-800', 'text-slate-300', 'font-medium');
+            }
+            renderActiveElections();
+        }
+
+        function searchElections() {
+            renderActiveElections();
+        }
+
+        function renderActiveElections() {
+            const container = document.getElementById('elections-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            const searchQuery = (document.getElementById('election-search')?.value || '').toLowerCase();
+
+            const filtered = electionsData.filter(e => {
+                const matchCategory = activeFilterCategory === 'ALL' || e.category === activeFilterCategory;
+                const matchSearch = e.title.toLowerCase().includes(searchQuery) ||
+                                    e.candidates.some(c => c.name.toLowerCase().includes(searchQuery) || (c.slogan && c.slogan.toLowerCase().includes(searchQuery)));
+                return matchCategory && matchSearch;
+            });
+
+            if (filtered.length === 0) {
+                container.innerHTML = `
+                    <div class="glass-card rounded-2xl p-12 text-center text-slate-400 border border-slate-700/60">
+                        <div class="text-4xl mb-3">🔍</div>
+                        <h3 class="text-lg font-bold text-white">No Elections Match Your Filter</h3>
+                        <p class="text-xs mt-1">Try clearing your search or switching to "All Elections".</p>
+                    </div>
+                `;
+                return;
+            }
+
+            filtered.forEach(election => {
+                // Initialize RCV selections array if not present
+                if (!rcvSelections[election.id]) {
+                    rcvSelections[election.id] = [];
+                }
+
+                const isRcv = election.votingStrategy === 'RCV';
+                const isPlurality = election.votingStrategy === 'PLURALITY';
+                const isReferendum = election.votingStrategy === 'REFERENDUM';
+
+                let strategyBadge = '';
+                if (isRcv) {
+                    strategyBadge = `<span class="bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1.5"><span>⚡ Ranked-Choice Voting (IRV)</span></span>`;
+                } else if (isPlurality) {
+                    strategyBadge = `<span class="bg-purple-500/20 text-purple-300 border border-purple-500/30 px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1.5"><span>🗳️ Plurality (Single-Choice)</span></span>`;
+                } else {
+                    strategyBadge = `<span class="bg-emerald-500/20 text-emerald-300 border border-emerald-500/30 px-3 py-1 rounded-full text-xs font-bold flex items-center space-x-1.5"><span>📜 Campus Referendum</span></span>`;
+                }
+
+                const cardHtml = `
+                    <div class="glass-card rounded-2xl p-6 sm:p-8 border ${election.hasVoted ? 'border-emerald-500/50 bg-emerald-950/10' : 'border-slate-700/80'} shadow-lg transition-all">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-slate-800 pb-5">
+                            <div>
+                                <div class="flex flex-wrap items-center gap-2 mb-2">
+                                    ${strategyBadge}
+                                    <span class="bg-slate-800 text-slate-300 px-3 py-1 rounded-full text-xs font-semibold">👥 Eligibility: ${election.eligibility}</span>
+                                    <span class="bg-amber-500/15 text-amber-300 px-3 py-1 rounded-full text-xs font-semibold">⏰ Closes in ${election.closesIn}</span>
+                                </div>
+                                <h2 class="text-xl sm:text-2xl font-extrabold text-white flex items-center gap-2">
+                                    <span>${election.title}</span>
+                                    ${election.hasVoted ? '<span class="bg-emerald-500 text-white text-xs px-2.5 py-0.5 rounded-full font-bold">✅ Voted & Sealed</span>' : ''}
+                                </h2>
+                                ${election.propositionText ? `<p class="text-xs sm:text-sm text-slate-200 mt-3 p-4 bg-slate-800/90 rounded-xl border border-slate-700/80 leading-relaxed font-medium">${election.propositionText}</p>` : ''}
+                            </div>
+                            
+                            <div class="flex items-center space-x-3 self-end md:self-center">
+                                ${isRcv && !election.hasVoted ? `<button onclick="clearRcvSelection('${election.id}')" class="text-xs text-slate-400 hover:text-white px-3 py-1.5 bg-slate-800 rounded-lg">Clear Ranks</button>` : ''}
+                                <div class="text-right hidden sm:block">
+                                    <div class="text-[11px] uppercase tracking-wider text-slate-400 font-bold">Total Ballots Cast</div>
+                                    <div class="text-lg font-extrabold text-white font-mono">${election.totalVotes.toLocaleString()}</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Candidates or Referendum Options List -->
+                        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                            ${election.candidates.map((cand, index) => {
+                                const rcvRankIndex = rcvSelections[election.id].indexOf(cand.id);
+                                const isRanked = rcvRankIndex !== -1;
+                                const rankNum = isRanked ? rcvRankIndex + 1 : null;
+
+                                return `
+                                    <div onclick="handleCandidateSelect('${election.id}', '${cand.id}', ${election.hasVoted})" class="p-5 rounded-xl border transition-all cursor-pointer flex flex-col justify-between ${isRanked || (election.selectedCandidate === cand.id) ? 'bg-indigo-900/40 border-indigo-500 shadow-glow' : 'bg-slate-800/60 border-slate-700/80 hover:border-slate-600 hover:bg-slate-800'}">
+                                        <div>
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <h3 class="text-base font-extrabold text-white flex items-center space-x-2">
+                                                        <span>${cand.name}</span>
+                                                    </h3>
+                                                    ${cand.slogan ? `<p class="text-xs text-indigo-300 font-medium mt-1">${cand.slogan}</p>` : ''}
+                                                </div>
+                                                <!-- Rank Badge or Radio Indicator -->
+                                                <div>
+                                                    ${isRcv ? `
+                                                        <div class="w-8 h-8 rounded-full flex items-center justify-center font-extrabold text-sm transition-all ${isRanked ? 'bg-indigo-600 text-white shadow-md scale-110' : 'bg-slate-900 border border-slate-700 text-slate-500'}">
+                                                            ${isRanked ? `#${rankNum}` : '+'}
+                                                        </div>
+                                                    ` : `
+                                                        <div class="w-6 h-6 rounded-full border-2 flex items-center justify-center ${election.selectedCandidate === cand.id ? 'border-indigo-500 bg-indigo-600' : 'border-slate-600'}">
+                                                            ${election.selectedCandidate === cand.id ? '<div class="w-2.5 h-2.5 bg-white rounded-full"></div>' : ''}
+                                                        </div>
+                                                    `}
+                                                </div>
+                                            </div>
+                                            ${cand.bio ? `<p class="text-xs text-slate-300 mt-3 leading-relaxed">${cand.bio}</p>` : ''}
+                                        </div>
+                                        
+                                        <!-- Action footer inside card -->
+                                        <div class="mt-4 pt-3 border-t border-slate-700/60 flex items-center justify-between text-xs text-slate-400">
+                                            <span>${isRcv ? (isRanked ? `<strong class="text-indigo-400">Ranked Choice #${rankNum}</strong>` : 'Click card to assign next rank') : 'Click to select choice'}</span>
+                                            ${cand.academic ? `<span onclick="event.stopPropagation(); switchTab('compare')" class="text-indigo-300 hover:underline">Compare Policies →</span>` : ''}
+                                        </div>
+                                    </div>
+                                `;
+                            }).join('')}
+                        </div>
+
+                        <!-- Cast Ballot Footer Button -->
+                        <div class="mt-6 pt-5 border-t border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+                            <div class="text-xs text-slate-400">
+                                ${isRcv ? `
+                                    <span>Ranked choices selected: <strong class="text-indigo-300">${rcvSelections[election.id].length} / ${election.candidates.length}</strong>. (You may rank as many or as few as you wish).</span>
+                                ` : `
+                                    <span>Select one option above and submit to seal your ballot.</span>
+                                `}
+                            </div>
+
+                            ${election.hasVoted ? `
+                                <div class="px-6 py-3 bg-emerald-600/20 border border-emerald-500/40 text-emerald-300 rounded-xl font-bold text-xs flex items-center space-x-2">
+                                    <span>✅ Ballot Successfully Cast & Cryptographically Recorded</span>
+                                </div>
+                            ` : `
+                                <button onclick="submitBallot('${election.id}')" class="w-full sm:w-auto px-8 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-extrabold rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center justify-center space-x-2">
+                                    <span>${isRcv ? 'Submit Verifiable Ranked Ballot' : 'Submit Verifiable Ballot'}</span>
+                                    <span>🗳️</span>
+                                </button>
+                            `}
+                        </div>
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+        }
+
+        function handleCandidateSelect(electionId, candId, hasVoted) {
+            if (hasVoted) return;
+            const election = electionsData.find(e => e.id === electionId);
+            if (!election) return;
+
+            if (election.votingStrategy === 'RCV') {
+                const selections = rcvSelections[electionId];
+                const existingIndex = selections.indexOf(candId);
+                if (existingIndex !== -1) {
+                    // Remove from ranking if already clicked
+                    selections.splice(existingIndex, 1);
+                } else {
+                    selections.push(candId);
+                }
+            } else {
+                election.selectedCandidate = candId;
+            }
+            renderActiveElections();
+        }
+
+        function clearRcvSelection(electionId) {
+            rcvSelections[electionId] = [];
+            renderActiveElections();
+        }
+
+        function submitBallot(electionId) {
+            const election = electionsData.find(e => e.id === electionId);
+            if (!election) return;
+
+            let choiceSummary = '';
+            if (election.votingStrategy === 'RCV') {
+                const ranks = rcvSelections[electionId];
+                if (ranks.length === 0) {
+                    alert('Please select and rank at least your 1st choice candidate before submitting!');
+                    return;
+                }
+                const rankNames = ranks.map((cid, idx) => {
+                    const c = election.candidates.find(item => item.id === cid);
+                    return `${idx + 1}st: ${c.name}`;
+                });
+                choiceSummary = rankNames.join(', ');
+            } else {
+                if (!election.selectedCandidate) {
+                    alert('Please select an option before casting your ballot!');
+                    return;
+                }
+                const c = election.candidates.find(item => item.id === election.selectedCandidate);
+                choiceSummary = `Choice: ${c.name}`;
+            }
+
+            // Mark as voted & increment
+            election.hasVoted = true;
+            election.totalVotes += 1;
+
+            // Generate Cryptographic Receipt Hash
+            const randomHex = Math.floor(100000 + Math.random() * 900000).toString(16).toUpperCase();
+            const receiptToken = `#UV-2026-${election.id}-${randomHex}`;
+
+            // Add to Audit Ledger
+            auditLedger.unshift({
+                token: receiptToken,
+                category: election.title.split(' ')[0] + ' ' + election.title.split(' ')[1],
+                summary: choiceSummary.length > 45 ? choiceSummary.substring(0, 45) + '...' : choiceSummary,
+                timestamp: new Date().toISOString().replace('T', ' ').substring(0, 19) + ' UTC',
+                status: '✅ Validated & Sealed'
+            });
+
+            // Update Total Ballots Stat
+            const statTotal = document.getElementById('stat-total-ballots');
+            if (statTotal) {
+                const currentVal = parseInt(statTotal.innerText.replace(/,/g, ''));
+                statTotal.innerText = (currentVal + 1).toLocaleString();
+            }
+
+            renderActiveElections();
+            renderAuditLedger();
+
+            // Show Confirmation Modal
+            document.getElementById('modal-election-title').innerText = election.title;
+            document.getElementById('modal-choice-summary').innerText = choiceSummary;
+            document.getElementById('modal-receipt-token').innerText = receiptToken;
+            document.getElementById('vote-modal').classList.remove('hidden');
+        }
+
+        function closeVoteModal() {
+            document.getElementById('vote-modal').classList.add('hidden');
+        }
+
+        function closeVoteModalAndGoToLedger() {
+            closeVoteModal();
+            switchTab('ledger');
+        }
+
+        function copyModalToken() {
+            const token = document.getElementById('modal-receipt-token').innerText;
+            navigator.clipboard?.writeText(token);
+            const btn = document.getElementById('copy-btn-text');
+            btn.innerText = 'Copied! ✅';
+            setTimeout(() => btn.innerText = 'Copy', 2000);
+        }
+
+        /************************************************************************
+         * PLATFORM COMPARISON MATRIX
+         ************************************************************************/
+        function renderComparisonMatrix() {
+            const table = document.getElementById('comparison-table');
+            const select = document.getElementById('compare-election-select');
+            if (!table || !select) return;
+
+            const selectedElectionId = select.value;
+            const election = electionsData.find(e => e.id === selectedElectionId);
+            if (!election) return;
+
+            // Take up to 4 candidates
+            const cands = election.candidates.slice(0, 4);
+
+            table.innerHTML = `
+                <thead>
+                    <tr class="border-b border-slate-800 bg-slate-800/90 text-slate-300 uppercase font-bold text-xs">
+                        <th class="py-4 px-6 w-1/4">Policy / Campus Issue</th>
+                        ${cands.map(c => `<th class="py-4 px-6 text-white font-extrabold text-sm">${c.name}</th>`).join('')}
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-800/80 text-xs sm:text-sm">
+                    <tr>
+                        <td class="py-4 px-6 font-bold text-indigo-300 bg-slate-900/60">Campaign Slogan</td>
+                        ${cands.map(c => `<td class="py-4 px-6 font-semibold text-white leading-relaxed">${c.slogan || '—'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="py-4 px-6 font-bold text-emerald-300 bg-slate-900/60">📚 Academic & Library Access</td>
+                        ${cands.map(c => `<td class="py-4 px-6 text-slate-300 leading-relaxed">${c.academic || 'Focusing on standard syllabus transparency and tutoring access.'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="py-4 px-6 font-bold text-teal-300 bg-slate-900/60">🌱 Campus Sustainability & Green Budget</td>
+                        ${cands.map(c => `<td class="py-4 px-6 text-slate-300 leading-relaxed">${c.sustainability || 'Supporting campus solar initiatives and waste reduction.'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="py-4 px-6 font-bold text-amber-300 bg-slate-900/60">🍔 Housing, Dining & Club Allocation</td>
+                        ${cands.map(c => `<td class="py-4 px-6 text-slate-300 leading-relaxed">${c.housing || 'Advocating for student club grants and better dining hours.'}</td>`).join('')}
+                    </tr>
+                    <tr>
+                        <td class="py-4 px-6 font-bold text-purple-300 bg-slate-900/60">Candidate Background & Experience</td>
+                        ${cands.map(c => `<td class="py-4 px-6 text-slate-400 text-xs leading-relaxed">${c.bio || 'Active university student leaders committed to campus progress.'}</td>`).join('')}
+                    </tr>
+                </tbody>
+            `;
+        }
+
+        /************************************************************************
+         * TOWNHALL Q&A FORUM
+         ************************************************************************/
+        function renderTownhallQA() {
+            const container = document.getElementById('qa-list-container');
+            if (!container) return;
+            container.innerHTML = '';
+
+            townhallQuestions.forEach(q => {
+                const cardHtml = `
+                    <div class="glass-card rounded-2xl p-6 border border-slate-700/80 space-y-4">
+                        <div class="flex items-start justify-between gap-4">
+                            <div>
+                                <div class="flex items-center space-x-2 text-xs text-slate-400 mb-1.5">
+                                    <span class="font-bold text-indigo-400">Target: ${q.target}</span>
+                                    <span>•</span>
+                                    <span class="bg-slate-800 px-2 py-0.5 rounded text-[11px]">${q.category}</span>
+                                    <span>•</span>
+                                    <span>Asked by ${q.author} (${q.timestamp})</span>
+                                </div>
+                                <h3 class="text-base font-bold text-white leading-relaxed">${q.question}</h3>
+                            </div>
+
+                            <!-- Upvote Button -->
+                            <button onclick="toggleUpvoteQuestion('${q.id}')" class="px-3 py-2 rounded-xl border flex flex-col items-center justify-center transition-all ${q.hasUpvoted ? 'bg-indigo-600 border-indigo-500 text-white shadow-md' : 'bg-slate-800 border-slate-700 text-slate-300 hover:border-slate-600'}">
+                                <span class="text-xs font-extrabold">▲</span>
+                                <span class="text-xs font-bold">${q.upvotes}</span>
+                            </button>
+                        </div>
+
+                        <!-- Candidate Official Response -->
+                        ${q.answer ? `
+                            <div class="bg-indigo-950/30 border border-indigo-500/30 rounded-xl p-4 text-xs sm:text-sm space-y-1 mt-3">
+                                <div class="flex items-center space-x-1.5 text-indigo-300 font-bold text-xs uppercase tracking-wider">
+                                    <span>✅ Verified Candidate Response</span>
+                                </div>
+                                <p class="text-slate-200 leading-relaxed font-medium">${q.answer}</p>
+                            </div>
+                        ` : `
+                            <div class="bg-slate-900/60 border border-slate-800 rounded-xl p-3 text-xs text-amber-300/80 flex items-center justify-between">
+                                <span>⏳ Candidate response pending...</span>
+                                ${currentRole === 'candidate' ? `<button onclick="answerQuestionPrompt('${q.id}')" class="px-3 py-1 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg text-xs">Answer Now</button>` : ''}
+                            </div>
+                        `}
+                    </div>
+                `;
+                container.insertAdjacentHTML('beforeend', cardHtml);
+            });
+
+            const badge = document.getElementById('qa-badge-count');
+            if (badge) badge.innerText = townhallQuestions.length;
+        }
+
+        function toggleUpvoteQuestion(qid) {
+            const q = townhallQuestions.find(item => item.id === qid);
+            if (!q) return;
+            if (q.hasUpvoted) {
+                q.hasUpvoted = false;
+                q.upvotes -= 1;
+            } else {
+                q.hasUpvoted = true;
+                q.upvotes += 1;
+            }
+            renderTownhallQA();
+        }
+
+        function sortQA(type) {
+            if (type === 'upvotes') {
+                townhallQuestions.sort((a, b) => b.upvotes - a.upvotes);
+            } else {
+                townhallQuestions.reverse();
+            }
+            renderTownhallQA();
+        }
+
+        function submitTownhallQuestion(e) {
+            e.preventDefault();
+            const target = document.getElementById('qa-target-select').value;
+            const category = document.getElementById('qa-category-select').value;
+            const text = document.getElementById('qa-question-text').value;
+            const isAnon = document.getElementById('qa-anonymous').checked;
+
+            if (!text.trim()) return;
+
+            townhallQuestions.unshift({
+                id: 'qa-' + Date.now(),
+                target: target,
+                category: category,
+                question: text,
+                author: isAnon ? 'Anonymous Verified Student' : 'Jordan Smith (Verified Senior)',
+                timestamp: 'Just now',
+                upvotes: 1,
+                hasUpvoted: true,
+                answer: null
+            });
+
+            document.getElementById('qa-question-text').value = '';
+            renderTownhallQA();
+            alert('Your question has been posted to the Campus Townhall Forum! Candidates have been notified.');
+        }
+
+        function answerQuestionPrompt(qid) {
+            const q = townhallQuestions.find(item => item.id === qid);
+            if (!q) return;
+            const ans = prompt("Enter official campaign response for: " + q.question);
+            if (ans && ans.trim()) {
+                q.answer = ans.trim();
+                renderTownhallQA();
+            }
+        }
+
+        /************************************************************************
+         * PUBLIC AUDIT LEDGER & TOKEN VERIFICATION
+         ************************************************************************/
+        function renderAuditLedger() {
+            const tbody = document.getElementById('ledger-table-body');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            auditLedger.forEach(item => {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="py-3 px-4 font-bold text-emerald-400 cursor-pointer hover:underline select-all" onclick="populateTokenInput('${item.token}')">${item.token}</td>
+                        <td class="py-3 px-4 text-white font-sans">${item.category}</td>
+                        <td class="py-3 px-4 text-slate-300 font-sans">${item.summary}</td>
+                        <td class="py-3 px-4 text-slate-400">${item.timestamp}</td>
+                        <td class="py-3 px-4 text-right text-emerald-400 font-bold font-sans">${item.status}</td>
+                    </tr>
+                `);
+            });
+        }
+
+        function populateTokenInput(token) {
+            const input = document.getElementById('verify-token-input');
+            if (input) {
+                input.value = token;
+                verifyBallotToken();
+            }
+        }
+
+        function verifyBallotToken() {
+            let token = (document.getElementById('verify-token-input')?.value || '').trim();
+            if (!token) {
+                alert('Please enter or click a Receipt Token to verify!');
+                return;
+            }
+            if (!token.startsWith('#')) token = '#' + token;
+
+            const box = document.getElementById('verify-result-box');
+            if (!box) return;
+
+            const found = auditLedger.find(item => item.token.toUpperCase() === token.toUpperCase());
+
+            if (found) {
+                box.className = 'mt-6 block p-6 rounded-2xl border border-emerald-500/50 bg-emerald-950/20 text-emerald-300 space-y-2 animate-in fade-in';
+                box.innerHTML = `
+                    <div class="flex items-center space-x-2 text-base font-extrabold text-white">
+                        <span>✅ Zero-Knowledge Verification Successful!</span>
+                        <span class="text-xs bg-emerald-500/20 text-emerald-300 px-2.5 py-0.5 rounded-full border border-emerald-500/30 font-mono">SEALED IN LEDGER</span>
+                    </div>
+                    <p class="text-xs sm:text-sm text-slate-200">
+                        Your receipt token <strong class="font-mono text-amber-300">${found.token}</strong> was cryptographically matched on the campus ledger for <strong class="text-white">${found.category}</strong>.
+                    </p>
+                    <div class="bg-slate-900/80 p-3 rounded-xl border border-slate-800 text-xs space-y-1 font-mono">
+                        <div>Recorded Choices: <strong class="text-indigo-300 font-sans">${found.summary}</strong></div>
+                        <div>Sealing Timestamp: <strong class="text-slate-300">${found.timestamp}</strong></div>
+                        <div>Anonymity Status: <strong class="text-emerald-400 font-sans">100% Secret Ballot (Student Identity Detached)</strong></div>
+                    </div>
+                `;
+            } else {
+                box.className = 'mt-6 block p-6 rounded-2xl border border-rose-500/50 bg-rose-950/20 text-rose-300 space-y-2 animate-in fade-in';
+                box.innerHTML = `
+                    <div class="flex items-center space-x-2 text-base font-extrabold text-white">
+                        <span>⚠️ Receipt Token Not Found on Ledger</span>
+                    </div>
+                    <p class="text-xs sm:text-sm">
+                        No ballot matching token <strong class="font-mono text-amber-300">${token}</strong> was found. Please double-check for typos or ensure you copied the exact token generated when casting your ballot.
+                    </p>
+                `;
+            }
+        }
+
+        function seedSampleReceipts() {
+            renderAuditLedger();
+            alert("Ledger data reset to baseline verified tokens.");
+        }
+
+        /************************************************************************
+         * RCV INSTANT-RUNOFF SIMULATOR ENGINE
+         ************************************************************************/
+        function runRcvRound(roundNum) {
+            renderRcvSimulatorBars(roundNum);
+        }
+
+        function resetRcvSimulator() {
+            renderRcvSimulatorBars(1);
+        }
+
+        function renderRcvSimulatorBars(roundNum) {
+            const stageBadge = document.getElementById('rcv-stage-badge');
+            const desc = document.getElementById('rcv-round-description');
+            const container = document.getElementById('rcv-bars-container');
+            if (!container) return;
+
+            // Update button active states
+            [1, 2, 3].forEach(n => {
+                const b = document.getElementById(`rcv-btn-${n}`);
+                if (b) {
+                    if (n === roundNum) {
+                        b.className = 'px-3.5 py-2 bg-indigo-600 text-white rounded-xl text-xs font-bold shadow transition';
+                    } else {
+                        b.className = 'px-3.5 py-2 bg-slate-700 hover:bg-slate-600 text-slate-200 rounded-xl text-xs font-bold shadow transition';
+                    }
+                }
+            });
+
+            if (roundNum === 1) {
+                if (stageBadge) stageBadge.innerText = 'Round 1 (Initial First-Choice Tally)';
+                if (desc) desc.innerHTML = `
+                    <p><strong class="text-white">Round 1 Status:</strong> All first-choice votes have been tallied across the 3,420 cast ballots for SGA Executive.</p>
+                    <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                        <li><strong>Alex Rivera & Maya Lin:</strong> 1,368 votes (40.0%)</li>
+                        <li><strong>Jordan Vance & Chloe Bennett:</strong> 1,163 votes (34.0%)</li>
+                        <li><strong>Marcus Thorne & Liam O'Connor:</strong> 615 votes (18.0%)</li>
+                        <li><strong>Elena Rostova & David Kim:</strong> 274 votes (8.0%)</li>
+                    </ul>
+                    <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 font-semibold mt-2">
+                        ⚠️ No candidate reached the 50% threshold (1,711 votes required). Candidate with lowest votes (<strong class="text-white">Elena Rostova - 8%</strong>) is eliminated!
+                    </div>
+                `;
+
+                container.innerHTML = createBarHtml('Alex Rivera & Maya Lin', 1368, 40.0, 'from-indigo-600 to-purple-600', false, false) +
+                                      createBarHtml('Jordan Vance & Chloe Bennett', 1163, 34.0, 'from-purple-600 to-pink-600', false, false) +
+                                      createBarHtml('Marcus Thorne & Liam O\'Connor', 615, 18.0, 'from-amber-600 to-orange-600', false, false) +
+                                      createBarHtml('Elena Rostova & David Kim', 274, 8.0, 'from-rose-600 to-red-600', true, false);
+            } else if (roundNum === 2) {
+                if (stageBadge) stageBadge.innerText = 'Round 2 (Transferring Elena Rostova\'s 2nd-Choice Votes)';
+                if (desc) desc.innerHTML = `
+                    <p><strong class="text-white">Round 2 Status:</strong> Elena Rostova's 274 ballots were examined for their 2nd preference: <strong class="text-emerald-400">140 transferred to Alex Rivera</strong>, <strong class="text-emerald-400">94 to Jordan Vance</strong>, and <strong class="text-emerald-400">40 to Marcus Thorne</strong>.</p>
+                    <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                        <li><strong>Alex Rivera & Maya Lin:</strong> 1,508 votes (44.1%)</li>
+                        <li><strong>Jordan Vance & Chloe Bennett:</strong> 1,257 votes (36.8%)</li>
+                        <li><strong>Marcus Thorne & Liam O'Connor:</strong> 655 votes (19.1%)</li>
+                        <li><span class="line-through text-slate-500">Elena Rostova & David Kim (Eliminated)</span></li>
+                    </ul>
+                    <div class="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl text-amber-300 font-semibold mt-2">
+                        ⚠️ Still no majority &gt;50%. Candidate with lowest remaining tally (<strong class="text-white">Marcus Thorne - 19.1%</strong>) is eliminated next!
+                    </div>
+                `;
+
+                container.innerHTML = createBarHtml('Alex Rivera & Maya Lin', 1508, 44.1, 'from-indigo-600 to-purple-600', false, false, '+140 transfer') +
+                                      createBarHtml('Jordan Vance & Chloe Bennett', 1257, 36.8, 'from-purple-600 to-pink-600', false, false, '+94 transfer') +
+                                      createBarHtml('Marcus Thorne & Liam O\'Connor', 655, 19.1, 'from-amber-600 to-orange-600', true, false, '+40 transfer') +
+                                      createBarHtml('Elena Rostova & David Kim (Eliminated)', 0, 0, 'from-slate-700 to-slate-800', true, false);
+            } else if (roundNum === 3) {
+                if (stageBadge) stageBadge.innerText = 'Round 3 (Transferring Marcus Thorne\'s Votes -> Winner Declared!)';
+                if (desc) desc.innerHTML = `
+                    <p><strong class="text-white font-bold text-emerald-400">🎉 Majority Winner Crowned!</strong> Marcus Thorne's 655 ballots redistributed: <strong class="text-emerald-400">346 transferred to Alex Rivera</strong> and <strong class="text-emerald-400">309 to Jordan Vance</strong>.</p>
+                    <ul class="list-disc pl-4 space-y-1 text-slate-300">
+                        <li class="text-emerald-300 font-bold">👑 Alex Rivera & Maya Lin: 1,854 votes (54.2%) — WINNER!</li>
+                        <li><strong>Jordan Vance & Chloe Bennett:</strong> 1,566 votes (45.8%)</li>
+                    </ul>
+                    <div class="p-3 bg-emerald-500/20 border border-emerald-500/40 rounded-xl text-emerald-300 font-bold mt-2 flex items-center space-x-2">
+                        <span>🏆 Alex Rivera & Maya Lin cross the 1,711 majority threshold with 54.2% of final ranked preferences!</span>
+                    </div>
+                `;
+
+                container.innerHTML = createBarHtml('Alex Rivera & Maya Lin (WINNER 👑)', 1854, 54.2, 'from-emerald-500 to-teal-600', false, true, '+346 transfer') +
+                                      createBarHtml('Jordan Vance & Chloe Bennett', 1566, 45.8, 'from-purple-600 to-pink-600', false, false, '+309 transfer') +
+                                      createBarHtml('Marcus Thorne & Liam O\'Connor (Eliminated)', 0, 0, 'from-slate-700 to-slate-800', true, false) +
+                                      createBarHtml('Elena Rostova & David Kim (Eliminated)', 0, 0, 'from-slate-700 to-slate-800', true, false);
+            }
+        }
+
+        function createBarHtml(name, votes, pct, gradient, isEliminated, isWinner, transferText) {
+            return `
+                <div class="space-y-1.5 transition-all">
+                    <div class="flex items-center justify-between text-xs sm:text-sm font-bold">
+                        <span class="${isWinner ? 'text-emerald-300 font-extrabold text-base' : (isEliminated ? 'text-slate-500 line-through' : 'text-white')}">${name} ${transferText ? `<span class="text-xs text-amber-400 ml-1.5 font-normal">(${transferText})</span>` : ''}</span>
+                        <span class="${isWinner ? 'text-emerald-300' : 'text-slate-300'}">${votes.toLocaleString()} votes (${pct}%)</span>
+                    </div>
+                    <div class="w-full bg-slate-800 h-6 rounded-xl overflow-hidden p-0.5 border border-slate-700 flex items-center">
+                        <div class="h-full rounded-lg bg-gradient-to-r ${gradient} transition-all duration-700 flex items-center justify-end px-2" style="width: ${Math.max(pct, 2)}%;">
+                            ${pct > 12 ? `<span class="text-[10px] text-white font-extrabold">${pct}%</span>` : ''}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        /************************************************************************
+         * CANDIDATE PROFILE EDITOR LOGIC
+         ************************************************************************/
+        function saveCandidateProfile(e) {
+            e.preventDefault();
+            const slogan = document.getElementById('cand-edit-slogan').value;
+            const academic = document.getElementById('cand-edit-academic').value;
+            const green = document.getElementById('cand-edit-green').value;
+            const housing = document.getElementById('cand-edit-housing').value;
+
+            // Update candidate in electionsData
+            const sgaElection = electionsData.find(e => e.id === 'SGA-2026');
+            if (sgaElection) {
+                const cand = sgaElection.candidates.find(c => c.id === 'cand-sga-1');
+                if (cand) {
+                    cand.slogan = slogan;
+                    cand.academic = academic;
+                    cand.sustainability = green;
+                    cand.housing = housing;
+                }
+            }
+
+            renderActiveElections();
+            renderComparisonMatrix();
+            alert('Your campaign profile & manifesto updates have been published live across the Campus Election Portal! ✨');
+        }
+
+        /************************************************************************
+         * ADMIN ELECTION CREATION & TABLE LOGIC
+         ************************************************************************/
+        function createNewElection(e) {
+            e.preventDefault();
+            const title = document.getElementById('admin-new-title').value;
+            const category = document.getElementById('admin-new-category').value;
+            const strategy = document.getElementById('admin-new-strategy').value;
+            const eligibility = document.getElementById('admin-new-eligibility').value;
+            const candidatesStr = document.getElementById('admin-new-candidates').value;
+
+            const candList = candidatesStr.split(',').map((name, idx) => ({
+                id: 'new-cand-' + Date.now() + idx,
+                name: name.trim(),
+                slogan: 'Official nominee for ' + title,
+                bio: 'Verified student candidate dedicated to representing campus interests.',
+                academic: 'Committed to academic excellence and library study resources.',
+                sustainability: 'Advocating for campus sustainability and waste reduction.',
+                housing: 'Working to improve dorm facilities and dining service satisfaction.',
+                votes: 0
+            }));
+
+            const newElection = {
+                id: 'ELEC-' + Math.floor(100 + Math.random() * 900),
+                title: title,
+                category: category,
+                votingStrategy: strategy,
+                eligibility: eligibility,
+                status: 'Live',
+                closesIn: '48 hours, 00 mins',
+                totalVotes: 0,
+                hasVoted: false,
+                candidates: candList
+            };
+
+            electionsData.unshift(newElection);
+            document.getElementById('admin-new-title').value = '';
+            document.getElementById('admin-new-candidates').value = '';
+
+            renderActiveElections();
+            renderAdminElectionsTable();
+            alert(`New campus ballot "${title}" launched successfully! You can switch back to Voter Mode to cast ranked votes on it immediately.`);
+        }
+
+        function renderAdminElectionsTable() {
+            const tbody = document.getElementById('admin-elections-table');
+            if (!tbody) return;
+            tbody.innerHTML = '';
+
+            electionsData.forEach(e => {
+                tbody.insertAdjacentHTML('beforeend', `
+                    <tr class="hover:bg-slate-800/50 transition">
+                        <td class="py-3 px-4 font-bold text-white">${e.id} - ${e.title}</td>
+                        <td class="py-3 px-4"><span class="bg-indigo-500/20 text-indigo-300 px-2 py-0.5 rounded text-xs font-bold">${e.votingStrategy}</span></td>
+                        <td class="py-3 px-4 text-slate-300 text-xs">${e.eligibility}</td>
+                        <td class="py-3 px-4 font-mono font-bold text-emerald-400">${e.totalVotes.toLocaleString()}</td>
+                        <td class="py-3 px-4"><span class="bg-emerald-500/20 text-emerald-300 px-2 py-0.5 rounded text-xs font-bold">🟢 Live</span></td>
+                        <td class="py-3 px-4 text-right">
+                            <button onclick="alert('Poll status toggled.')" class="px-2.5 py-1 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded text-xs">Toggle Close</button>
+                        </td>
+                    </tr>
+                `);
+            });
+        }
+
+        function exportAuditLedgerCsv() {
+            let csv = 'Receipt Token,Election Category,Recorded Choice Summary,Timestamp,Status\n';
+            auditLedger.forEach(item => {
+                csv += `"${item.token}","${item.category}","${item.summary}","${item.timestamp}","${item.status}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement("a");
+            link.setAttribute("href", url);
+            link.setAttribute("download", "univote_audit_ledger_export.csv");
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        /************************************************************************
+         * CHART.JS LIVE TURNOUT & VELOCITY ANALYTICS
+         ************************************************************************/
+        let chartClass, chartDept, chartHourly;
+
+        function initCharts() {
+            // Chart 1: Turnout by Class
+            const ctx1 = document.getElementById('chart-class-turnout')?.getContext('2d');
+            if (ctx1 && !chartClass) {
+                chartClass = new Chart(ctx1, {
+                    type: 'bar',
+                    data: {
+                        labels: ['Freshmen', 'Sophomores', 'Juniors', 'Seniors', 'Graduate / Law'],
+                        datasets: [{
+                            label: 'Participation Rate (%)',
+                            data: [61.2, 65.8, 72.4, 74.1, 58.9],
+                            backgroundColor: ['#6366f1', '#8b5cf6', '#ec4899', '#10b981', '#f59e0b'],
+                            borderRadius: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+                            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+
+            // Chart 2: Department Share Doughnut
+            const ctx2 = document.getElementById('chart-department-share')?.getContext('2d');
+            if (ctx2 && !chartDept) {
+                chartDept = new Chart(ctx2, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Engineering & CS', 'Business & Econ', 'Arts & Humanities', 'Sciences', 'Health & Nursing'],
+                        datasets: [{
+                            data: [34, 24, 18, 14, 10],
+                            backgroundColor: ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#06b6d4'],
+                            borderWidth: 2,
+                            borderColor: '#0f172a'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { position: 'right', labels: { color: '#cbd5e1', font: { size: 11 } } }
+                        }
+                    }
+                });
+            }
+
+            // Chart 3: Hourly Voting Velocity Line Chart
+            const ctx3 = document.getElementById('chart-hourly-velocity')?.getContext('2d');
+            if (ctx3 && !chartHourly) {
+                chartHourly = new Chart(ctx3, {
+                    type: 'line',
+                    data: {
+                        labels: ['8 AM', '9 AM', '10 AM', '11 AM', '12 PM', '1 PM', '2 PM', '3 PM', '4 PM', '5 PM', '6 PM', '7 PM'],
+                        datasets: [{
+                            label: 'Ballots Submitted Per Hour',
+                            data: [120, 240, 310, 380, 520, 490, 360, 410, 480, 310, 220, 184],
+                            borderColor: '#6366f1',
+                            backgroundColor: 'rgba(99, 102, 241, 0.15)',
+                            fill: true,
+                            tension: 0.4,
+                            borderWidth: 3,
+                            pointBackgroundColor: '#6366f1'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            y: { beginAtZero: true, ticks: { color: '#94a3b8' }, grid: { color: 'rgba(255,255,255,0.06)' } },
+                            x: { ticks: { color: '#94a3b8' }, grid: { display: false } }
+                        }
+                    }
+                });
+            }
+        }
+
+        function refreshCharts() {
+            if (chartHourly) {
+                chartHourly.data.datasets[0].data = chartHourly.data.datasets[0].data.map(v => Math.round(v * (0.9 + Math.random() * 0.2)));
+                chartHourly.update();
+            }
+            alert('Real-time chart analytics synchronized with latest campus ledger tally!');
+        }
+    </script>
+</body>
+</html>

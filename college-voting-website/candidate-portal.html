@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Candidate Campaign Portal — UniVote AI</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="css/styles.css">
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: { extend: { colors: { slate: { 850: '#1e293b', 950: '#020617' } } } }
+        }
+    </script>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen">
+    <div id="shared-header"></div>
+
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+        <div class="glass-card rounded-2xl p-6 sm:p-8 border border-slate-700/60 bg-gradient-to-br from-slate-900 to-indigo-950/40">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+                <div>
+                    <div class="inline-flex items-center space-x-2 bg-indigo-500/20 px-3 py-1 rounded-full text-indigo-300 text-xs font-bold mb-2 border border-indigo-500/30">
+                        <span>🏆 Candidate Campaign Dashboard</span>
+                    </div>
+                    <h1 class="text-2xl font-extrabold text-white">Manage Your SGA Executive Ticket</h1>
+                    <p class="text-xs sm:text-sm text-slate-300 mt-1">Logged in as: <strong class="text-white">Alex Rivera & Maya Lin</strong> (SGA Executive Candidates)</p>
+                </div>
+                <a href="ballots.html" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition self-start sm:self-center no-underline">← Return to Voter Mode</a>
+            </div>
+
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
+                <div class="p-4 rounded-xl bg-slate-800/80 border border-slate-700">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Profile Impressions</div>
+                    <div class="text-2xl font-extrabold text-white mt-1">1,842</div>
+                    <div class="text-xs text-emerald-400 font-medium mt-0.5">↑ +24% today</div>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-800/80 border border-slate-700">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Townhall Questions Answered</div>
+                    <div class="text-2xl font-extrabold text-indigo-400 mt-1">14 / 16</div>
+                    <div class="text-xs text-slate-400 font-medium mt-0.5">2 pending your response</div>
+                </div>
+                <div class="p-4 rounded-xl bg-slate-800/80 border border-slate-700">
+                    <div class="text-xs font-bold text-slate-400 uppercase">Student Sentiment Score</div>
+                    <div class="text-2xl font-extrabold text-emerald-400 mt-1">94%</div>
+                    <div class="text-xs text-slate-400 font-medium mt-0.5">Based on platform likes</div>
+                </div>
+            </div>
+
+            <!-- Edit Platform Form -->
+            <div class="glass-card p-6 rounded-2xl border border-slate-700/80 space-y-6">
+                <h2 class="text-lg font-bold text-white border-b border-slate-800 pb-3">Edit Your Official Campaign Platform & Manifesto</h2>
+                <form onsubmit="saveProfile(event)" class="space-y-5 text-xs sm:text-sm">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">Official Campaign Slogan</label>
+                            <input type="text" id="edit-slogan" value="Action Over Promises — 24/7 Library, Lower Dining Fees, Mental Health First" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-white focus:ring-2 focus:ring-indigo-500 font-medium">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-slate-300 mb-1.5">Video Pitch URL / Website Link</label>
+                            <input type="text" id="edit-video" value="https://youtube.com/watch?v=campaign-pitch-2026" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-3.5 py-2.5 text-indigo-300 font-mono text-xs focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-xs font-bold text-indigo-300 mb-1.5">📚 Academic Reform Commitment</label>
+                            <textarea rows="3" id="edit-academic" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-indigo-500">24/7 Library access during finals week, syllabus transparency guaranteed before drop deadlines, and $500 max cap on required physical textbook costs.</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-emerald-300 mb-1.5">🌱 Sustainability & Campus Green Budget</label>
+                            <textarea rows="3" id="edit-green" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-indigo-500">100% solar array installation on West Garage roof by Spring 2027, free reusable dining hall containers, and expanding EV shuttle buses.</textarea>
+                        </div>
+                        <div>
+                            <label class="block text-xs font-bold text-amber-300 mb-1.5">🍔 Housing, Dining & Club Budget</label>
+                            <textarea rows="3" id="edit-housing" class="w-full bg-slate-800 border border-slate-700 rounded-xl p-3 text-xs text-white focus:ring-2 focus:ring-indigo-500">Free weekend grocery shuttles for off-campus students, $20,000 emergency student micro-grant fund, and 20% boost to club event budgets.</textarea>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end pt-3">
+                        <button type="submit" class="px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-500 hover:to-purple-500 text-white font-bold rounded-xl shadow-lg shadow-indigo-600/30 transition flex items-center space-x-2">
+                            <span>Save Changes & Publish Live to Campus</span>
+                            <span>✨</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </main>
+
+    <div id="shared-footer"></div>
+
+    <script src="js/data.js"></script>
+    <script src="js/components.js"></script>
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            renderHeader('candidate');
+            renderFooter();
+        });
+
+        function saveProfile(e) {
+            e.preventDefault();
+            const elections = getElections();
+            const sga = elections.find(item => item.id === 'SGA-2026');
+            if (sga) {
+                const c = sga.candidates.find(item => item.id === 'cand-sga-1');
+                if (c) {
+                    c.slogan = document.getElementById('edit-slogan').value;
+                    c.academic = document.getElementById('edit-academic').value;
+                    c.sustainability = document.getElementById('edit-green').value;
+                    c.housing = document.getElementById('edit-housing').value;
+                    saveElections(elections);
+                }
+            }
+            alert('Your campaign profile & manifesto updates have been published live across the Campus Election Portal! ✨');
+        }
+    </script>
+</body>
+</html>
