@@ -3,7 +3,6 @@
 A smart full-stack Java web application that helps students recover lost items on campus using an intelligent matching algorithm.
 
 ## 🌟 Live Demo
-- **Website**: [https://findit-backend-zmmj.onrender.com](https://findit-backend-zmmj.onrender.com)
 - **GitHub**: https://github.com/JEROME146art/findit-backend
 
 ## 🎯 Features
