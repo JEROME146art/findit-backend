@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>Report Item - FindIt</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <style>
+    body { background: #f5f6fa; }
+    .type-selector { cursor: pointer; transition: all 0.3s; }
+    .type-selector.active { border-color: #6c5ce7 !important; background: #f8f9ff; }
+  </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+  <div class="container">
+    <a class="navbar-brand fw-bold" href="/dashboard"><i class="bi bi-search"></i> FindIt</a>
+    <div class="collapse navbar-collapse">
+      <ul class="navbar-nav me-auto">
+        <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+        <li class="nav-item"><a class="nav-link active" href="/report">Report Item</a></li>
+        <li class="nav-item"><a class="nav-link" href="/matches">My Matches</a></li>
+        <li class="nav-item"><a class="nav-link" href="/browse">Browse Items</a></li>
+      </ul>
+      <button class="btn btn-outline-light btn-sm" onclick="logout()">
+        <i class="bi bi-box-arrow-right"></i> Logout
+      </button>
+    </div>
+  </div>
+</nav>
+
+<div class="container mt-4 mb-5">
+  <div class="row justify-content-center">
+    <div class="col-md-8">
+      <div class="card shadow">
+        <div class="card-body p-5">
+          <h2 class="mb-4"><i class="bi bi-plus-circle"></i> Report an Item</h2>
+
+          <div id="alertBox"></div>
+
+          <!-- Type Selector -->
+          <div class="row g-3 mb-4">
+            <div class="col-md-6">
+              <div class="card type-selector active border-2" data-type="LOST" onclick="selectType('LOST')">
+                <div class="card-body text-center">
+                  <i class="bi bi-exclamation-triangle display-4 text-danger"></i>
+                  <h5 class="mt-2">I Lost Something</h5>
+                </div>
+              </div>
+            </div>
+            <div class="col-md-6">
+              <div class="card type-selector border-2" data-type="FOUND" onclick="selectType('FOUND')">
+                <div class="card-body text-center">
+                  <i class="bi bi-check-circle display-4 text-success"></i>
+                  <h5 class="mt-2">I Found Something</h5>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <form id="reportForm">
+            <input type="hidden" id="type" value="LOST">
+
+            <div class="mb-3">
+              <label class="form-label">Title *</label>
+              <input type="text" class="form-control" id="title" placeholder="e.g. Black iPhone 13" required>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Description</label>
+              <textarea class="form-control" id="description" rows="3" placeholder="Describe the item in detail — color, brand, distinctive marks, etc."></textarea>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Category *</label>
+              <select class="form-select" id="category" required>
+                <option value="">Choose category...</option>
+                <option value="ELECTRONICS">Electronics</option>
+                <option value="BOOKS">Books & Notes</option>
+                <option value="CLOTHING">Clothing</option>
+                <option value="ACCESSORIES">Accessories</option>
+                <option value="ID_CARDS">ID Cards</option>
+                <option value="KEYS">Keys</option>
+                <option value="BAGS">Bags & Backpacks</option>
+                <option value="DOCUMENTS">Documents</option>
+                <option value="STATIONERY">Stationery</option>
+                <option value="OTHER">Other</option>
+              </select>
+            </div>
+
+            <h5 class="mt-4">📍 Location</h5>
+            <div class="row">
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Building</label>
+                <input type="text" class="form-control" id="building" placeholder="e.g. Library">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Floor</label>
+                <input type="text" class="form-control" id="floor" placeholder="e.g. 2">
+              </div>
+              <div class="col-md-4 mb-3">
+                <label class="form-label">Campus</label>
+                <input type="text" class="form-control" id="campus" placeholder="e.g. Main Campus">
+              </div>
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Date of Incident</label>
+              <input type="date" class="form-control" id="incidentDate">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label">Image URL (optional)</label>
+              <input type="url" class="form-control" id="imageUrl" placeholder="https://...">
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-lg w-100">
+              <i class="bi bi-check-lg"></i> Submit Report
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const token = localStorage.getItem('token');
+  const userId = localStorage.getItem('userId');
+  if (!token) window.location.href = '/login';
+
+  function selectType(type) {
+    document.getElementById('type').value = type;
+    document.querySelectorAll('.type-selector').forEach(el => el.classList.remove('active'));
+    document.querySelector(`[data-type="${type}"]`).classList.add('active');
+  }
+
+  function logout() {
+    localStorage.clear();
+    window.location.href = '/';
+  }
+
+  document.getElementById('reportForm').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const alertBox = document.getElementById('alertBox');
+
+    const payload = {
+      title: document.getElementById('title').value,
+      description: document.getElementById('description').value,
+      category: document.getElementById('category').value,
+      location: {
+        building: document.getElementById('building').value,
+        floor: document.getElementById('floor').value,
+        campus: document.getElementById('campus').value
+      },
+      incidentDate: document.getElementById('incidentDate').value || null,
+      imageUrl: document.getElementById('imageUrl').value || null,
+      type: document.getElementById('type').value
+    };
+
+    try {
+      const response = await fetch(`/api/items/report/${userId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + token
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await response.json();
+
+      if (response.ok) {
+        alertBox.innerHTML = `<div class="alert alert-success">
+                    ✅ Item reported successfully! Redirecting to dashboard...
+                </div>`;
+        setTimeout(() => window.location.href = '/dashboard', 1500);
+      } else {
+        alertBox.innerHTML = `<div class="alert alert-danger">${data.message || 'Failed to report item'}</div>`;
+      }
+    } catch (err) {
+      alertBox.innerHTML = `<div class="alert alert-danger">Network error</div>`;
+    }
+  });
+</script>
+
+</body>
+</html>

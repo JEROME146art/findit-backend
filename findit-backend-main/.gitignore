@@ -1,0 +1,37 @@
+# Compiled files
+target/
+*.class
+
+# IDE files
+.idea/
+*.iml
+.vscode/
+.settings/
+.project
+.classpath
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Logs
+*.log
+logs/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# H2 database files
+*.mv.db
+*.trace.db
+
+# Environment secrets
+.env
+application-local.properties
+
+# Build outputs
+build/
+out/
+
+# Node (if any)
+node_modules/

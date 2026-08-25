@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Browse Items - FindIt</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <style>
+        body { background: #f5f6fa; }
+        .item-card { transition: all 0.3s; border: none; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+        .item-card:hover { transform: translateY(-5px); box-shadow: 0 10px 20px rgba(0,0,0,0.15); }
+        .item-card.resolved { opacity: 0.6; }
+        .btn-icon { width: 32px; height: 32px; padding: 0; display: inline-flex; align-items: center; justify-content: center; }
+        .badge-strong { background: linear-gradient(135deg, #00b894, #00cec9); }
+        .toast-container { position: fixed; top: 80px; right: 20px; z-index: 9999; }
+    </style>
+</head>
+<body>
+
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+    <div class="container">
+        <a class="navbar-brand fw-bold" href="/dashboard"><i class="bi bi-search"></i> FindIt</a>
+        <div class="collapse navbar-collapse">
+            <ul class="navbar-nav me-auto">
+                <li class="nav-item"><a class="nav-link" href="/dashboard">Dashboard</a></li>
+                <li class="nav-item"><a class="nav-link" href="/report">Report Item</a></li>
+                <li class="nav-item"><a class="nav-link" href="/matches">My Matches</a></li>
+                <li class="nav-item"><a class="nav-link active" href="/browse">Browse Items</a></li>
+            </ul>
+            <button class="btn btn-outline-light btn-sm" onclick="logout()">
+                <i class="bi bi-box-arrow-right"></i> Logout
+            </button>
+        </div>
+    </div>
+</nav>
+
+<!-- Toast Container -->
+<div class="toast-container" id="toastContainer"></div>
+
+<div class="container mt-4">
+    <h1><i class="bi bi-search"></i> Browse All Items</h1>
+
+    <!-- Filters Section -->
+    <div class="card mt-4 mb-3 shadow-sm">
+        <div class="card-body">
+            <div class="row g-3">
+                <div class="col-md-6">
+                    <label class="form-label small text-muted">🔍 Search</label>
+                    <input type="text" class="form-control" id="searchInput"
+                           placeholder="Search by title or description..." onkeyup="applyFilters()">
+                </div>
+                <div class="col-md-4">
+                    <label class="form-label small text-muted">📁 Category</label>
+                    <select class="form-select" id="categoryFilter" onchange="applyFilters()">
+                        <option value="">All Categories</option>
+                        <option value="ELECTRONICS">Electronics</option>
+                        <option value="BOOKS">Books & Notes</option>
+                        <option value="CLOTHING">Clothing</option>
+                        <option value="ACCESSORIES">Accessories</option>
+                        <option value="ID_CARDS">ID Cards</option>
+                        <option value="KEYS">Keys</option>
+                        <option value="BAGS">Bags & Backpacks</option>
+                        <option value="DOCUMENTS">Documents</option>
+                        <option value="STATIONERY">Stationery</option>
+                        <option value="OTHER">Other</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button class="btn btn-outline-secondary w-100" onclick="clearFilters()">
+                        <i class="bi bi-x-circle"></i> Clear
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <ul class="nav nav-tabs" id="itemTabs">
+        <li class="nav-item">
+            <a class="nav-link active" data-tab="lost" onclick="switchTab('lost')">
+                <i class="bi bi-exclamation-triangle text-danger"></i> Lost Items
+                <span class="badge bg-danger ms-1" id="lostBadge">0</span>
+            </a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" data-tab="found" onclick="switchTab('found')">
+                <i class="bi bi-check-circle text-success"></i> Found Items
+                <span class="badge bg-success ms-1" id="foundBadge">0</span>
+            </a>
+        </li>
+    </ul>
+
+    <div id="itemsContainer" class="mt-4"></div>
+</div>
+
+<!-- Item Details Modal -->
+<div class="modal fade" id="itemModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header" id="modalHeader">
+                <h5 class="modal-title" id="modalTitle">Item Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="modalBody"></div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+    const token = localStorage.getItem('token');
+    const currentUserId = localStorage.getItem('userId');
+    if (!token) window.location.href = '/login';
+
+    let allItems = { lost: [], found: [] };
+    let currentTab = 'lost';
+
+    function logout() {
+        localStorage.clear();
+        window.location.href = '/';
+    }
+
+    // ==================== Toast Notifications ====================
+    function showToast(message, type = 'success') {
+        const toastId = 'toast_' + Date.now();
+        const bgClass = type === 'success' ? 'bg-success' : type === 'error' ? 'bg-danger' : 'bg-info';
+        const icon = type === 'success' ? 'check-circle' : type === 'error' ? 'x-circle' : 'info-circle';
+
+        const toastHtml = `
+            <div id="${toastId}" class="toast align-items-center text-white ${bgClass} border-0 mb-2" role="alert">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        <i class="bi bi-${icon}"></i> ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+                </div>
+            </div>`;
+        document.getElementById('toastContainer').insertAdjacentHTML('beforeend', toastHtml);
+        const toastEl = document.getElementById(toastId);
+        const toast = new bootstrap.Toast(toastEl, { delay: 3000 });
+        toast.show();
+        toastEl.addEventListener('hidden.bs.toast', () => toastEl.remove());
+    }
+
+    // ==================== Time Ago ====================
+    function timeAgo(dateStr) {
+        if (!dateStr) return 'Unknown date';
+        const date = new Date(dateStr);
+        const seconds = Math.floor((new Date() - date) / 1000);
+        if (seconds < 60) return 'just now';
+        const minutes = Math.floor(seconds / 60);
+        if (minutes < 60) return minutes + ' min ago';
+        const hours = Math.floor(minutes / 60);
+        if (hours < 24) return hours + ' hour(s) ago';
+        const days = Math.floor(hours / 24);
+        if (days < 30) return days + ' day(s) ago';
+        return date.toLocaleDateString();
+    }
+
+    // ==================== Load Items ====================
+    async function loadAllItems() {
+        try {
+            const [lostRes, foundRes] = await Promise.all([
+                fetch('/api/items/lost', { headers: {'Authorization': 'Bearer ' + token} }),
+                fetch('/api/items/found', { headers: {'Authorization': 'Bearer ' + token} })
+            ]);
+            allItems.lost = await lostRes.json();
+            allItems.found = await foundRes.json();
+
+            document.getElementById('lostBadge').textContent = allItems.lost.length;
+            document.getElementById('foundBadge').textContent = allItems.found.length;
+
+            renderItems();
+        } catch (err) {
+            showToast('Failed to load items', 'error');
+        }
+    }
+
+    // ==================== Render Items ====================
+    function switchTab(tab) {
+        currentTab = tab;
+        document.querySelectorAll('.nav-link').forEach(el => el.classList.remove('active'));
+        document.querySelector(`[data-tab="${tab}"]`).classList.add('active');
+        renderItems();
+    }
+
+    function applyFilters() {
+        renderItems();
+    }
+
+    function clearFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('categoryFilter').value = '';
+        renderItems();
+    }
+
+    function renderItems() {
+        const container = document.getElementById('itemsContainer');
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const category = document.getElementById('categoryFilter').value;
+
+        let items = allItems[currentTab];
+
+        // Apply filters
+        if (search) {
+            items = items.filter(i =>
+                (i.title || '').toLowerCase().includes(search) ||
+                (i.description || '').toLowerCase().includes(search)
+            );
+        }
+        if (category) {
+            items = items.filter(i => i.category === category);
+        }
+
+        if (items.length === 0) {
+            container.innerHTML = `
+                <div class="alert alert-info mt-4">
+                    <i class="bi bi-info-circle"></i> No ${currentTab} items match your filters.
+                </div>`;
+            return;
+        }
+
+        const badgeColor = currentTab === 'lost' ? 'danger' : 'success';
+        let html = '<div class="row g-3 mt-1">';
+
+        for (const item of items) {
+            const loc = item.location ?
+                `${item.location.building || '?'}, ${item.location.campus || '?'}` : 'Unknown';
+            const resolvedClass = item.resolved ? 'resolved' : '';
+            const resolvedBadge = item.resolved ?
+                '<span class="badge bg-secondary ms-1">RESOLVED</span>' : '';
+
+            html += `
+                <div class="col-md-4">
+                    <div class="item-card card ${resolvedClass}">
+                        <div class="card-body">
+                            <div class="d-flex justify-content-between mb-2">
+                                <div>
+                                    <span class="badge bg-${badgeColor}">${currentTab.toUpperCase()}</span>
+                                    <span class="badge bg-secondary">${item.category || 'OTHER'}</span>
+                                    ${resolvedBadge}
+                                </div>
+                            </div>
+                            <h5 class="mb-1">${item.title}</h5>
+                            <p class="text-muted small mb-2">${item.description || 'No description'}</p>
+                            <p class="small mb-1"><i class="bi bi-geo-alt"></i> ${loc}</p>
+                            <p class="small text-muted mb-3">
+                                <i class="bi bi-clock"></i> ${timeAgo(item.createdAt)}
+                            </p>
+                            <div class="d-flex gap-2">
+                                <button class="btn btn-sm btn-outline-primary flex-grow-1"
+                                        onclick='viewDetails(${JSON.stringify(item).replace(/'/g, "&#39;")}, "${currentTab}")'>
+                                    <i class="bi bi-eye"></i> View
+                                </button>
+                                ${!item.resolved ? `
+                                    <button class="btn btn-sm btn-outline-success btn-icon"
+                                            title="${currentTab === 'lost' ? 'Mark as Resolved' : 'Mark as Claimed'}"
+                                            onclick="resolveItem(${item.id}, '${currentTab}')">
+                                        <i class="bi bi-check-lg"></i>
+                                    </button>
+                                ` : ''}
+                                <button class="btn btn-sm btn-outline-danger btn-icon"
+                                        title="Delete"
+                                        onclick="deleteItem(${item.id}, '${currentTab}')">
+                                    <i class="bi bi-trash"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+        }
+        html += '</div>';
+        container.innerHTML = html;
+    }
+
+    // ==================== Actions ====================
+    function viewDetails(item, type) {
+        const modalTitle = document.getElementById('modalTitle');
+        const modalBody = document.getElementById('modalBody');
+        const modalHeader = document.getElementById('modalHeader');
+
+        modalHeader.className = 'modal-header ' + (type === 'lost' ? 'bg-danger' : 'bg-success') + ' text-white';
+        modalTitle.textContent = item.title;
+
+        const loc = item.location ?
+            `${item.location.building || '?'}, Floor ${item.location.floor || '?'}, ${item.location.campus || '?'}`
+            : 'Unknown';
+
+        modalBody.innerHTML = `
+            <div class="row">
+                <div class="col-md-4">
+                    ${item.imageUrl ?
+            `<img src="${item.imageUrl}" class="img-fluid rounded" alt="Item image">` :
+            `<div class="bg-light p-5 text-center rounded"><i class="bi bi-image display-1 text-muted"></i></div>`
+        }
+                </div>
+                <div class="col-md-8">
+                    <p><strong>Category:</strong> ${item.category}</p>
+                    <p><strong>Description:</strong><br>${item.description || 'No description'}</p>
+                    <p><strong>📍 Location:</strong> ${loc}</p>
+                    <p><strong>📅 Incident Date:</strong> ${item.incidentDate || 'Unknown'}</p>
+                    <p><strong>⏰ Reported:</strong> ${timeAgo(item.createdAt)}</p>
+                    <p><strong>Status:</strong> ${item.resolved ?
+            '<span class="badge bg-secondary">RESOLVED</span>' :
+            '<span class="badge bg-warning">ACTIVE</span>'}</p>
+                </div>
+            </div>`;
+
+        new bootstrap.Modal(document.getElementById('itemModal')).show();
+    }
+
+    async function resolveItem(id, type) {
+        const action = type === 'lost' ? 'resolve' : 'claim';
+        if (!confirm(`Mark this item as ${type === 'lost' ? 'resolved' : 'claimed'}?`)) return;
+
+        try {
+            const res = await fetch(`/api/items/${type}/${id}/${action}`, {
+                method: 'PUT',
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            if (res.ok) {
+                showToast(`Item marked as ${type === 'lost' ? 'resolved' : 'claimed'}! ✅`);
+                await loadAllItems();
+            } else {
+                showToast('Failed to update item', 'error');
+            }
+        } catch (err) {
+            showToast('Network error', 'error');
+        }
+    }
+
+    async function deleteItem(id, type) {
+        if (!confirm('Are you sure you want to delete this item? This cannot be undone.')) return;
+
+        try {
+            const res = await fetch(`/api/items/${type}/${id}`, {
+                method: 'DELETE',
+                headers: {'Authorization': 'Bearer ' + token}
+            });
+            if (res.ok) {
+                showToast('Item deleted successfully! 🗑️');
+                await loadAllItems();
+            } else {
+                showToast('Failed to delete item', 'error');
+            }
+        } catch (err) {
+            showToast('Network error', 'error');
+        }
+    }
+
+    loadAllItems();
+</script>
+
+</body>
+</html>
